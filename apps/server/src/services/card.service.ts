@@ -21,11 +21,13 @@ import type {
 import { and, asc, desc, eq, gt, sql } from 'drizzle-orm';
 import type { Deps } from '../lib/context';
 import { conflict, notFound } from '../lib/errors';
+import { escapeHtml } from '../lib/html';
 import { toCardDTO } from '../lib/serialize';
 import { recordActivity } from './activity';
+import { listAttachments } from './attachment.service';
 import { listChecklists } from './checklist.service';
 import { listComments } from './comment.service';
-import { createNotification } from './notification.service';
+import { notify } from './notification.service';
 import { positionBetween } from './ordering';
 import { assertBoardPermission } from './permissions';
 
@@ -284,11 +286,16 @@ export async function assignCard(
   const { board } = await assertBoardPermission(deps.db, userId, card.boardId, 'card:update');
   await deps.db.insert(cardAssignees).values({ cardId, userId: assigneeId }).onConflictDoNothing();
   if (assigneeId !== userId) {
-    await createNotification(deps.db, {
+    const link = `${deps.env.PUBLIC_URL}/b/${card.boardId}`;
+    await notify(deps, {
       recipientId: assigneeId,
       workspaceId: board.workspaceId,
       type: 'card.assigned',
       data: { cardId, cardTitle: card.title, boardId: card.boardId },
+      email: {
+        subject: `You were assigned: ${card.title}`,
+        html: `<p>You were assigned to <b>${escapeHtml(card.title)}</b>.</p><p><a href="${link}">Open the board</a></p>`,
+      },
     });
   }
   deps.bus.publish({
@@ -327,7 +334,7 @@ export async function getCardDetail(
   const card = await loadCard(deps.db, cardId);
   await assertBoardPermission(deps.db, userId, card.boardId, 'board:read');
 
-  const [labelRows, assigneeRows, checklists, comments] = await Promise.all([
+  const [labelRows, assigneeRows, checklists, comments, attachments] = await Promise.all([
     deps.db
       .select({ labelId: cardLabels.labelId })
       .from(cardLabels)
@@ -338,6 +345,7 @@ export async function getCardDetail(
       .where(eq(cardAssignees.cardId, cardId)),
     listChecklists(deps.db, cardId),
     listComments(deps, userId, cardId),
+    listAttachments(deps.db, cardId),
   ]);
 
   const checklistTotal = checklists.reduce((n, c) => n + c.items.length, 0);
@@ -350,8 +358,10 @@ export async function getCardDetail(
     checklistDone,
     checklistTotal,
     commentCount: comments.length,
+    attachmentCount: attachments.length,
     comments,
     checklists,
+    attachments,
   };
 }
 

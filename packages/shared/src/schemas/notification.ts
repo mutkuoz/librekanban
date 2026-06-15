@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { idSchema } from './common';
 
-export const NOTIFICATION_TYPES = ['card.assigned', 'comment.added'] as const;
+export const NOTIFICATION_TYPES = ['card.assigned', 'comment.added', 'comment.mention'] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
 export const notificationSchema = z.object({

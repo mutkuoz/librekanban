@@ -1,6 +1,13 @@
-import { type Database, newId, notifications } from '@librekanban/db';
+import {
+  type Database,
+  newId,
+  notificationPreferences,
+  notifications,
+  user,
+} from '@librekanban/db';
 import type { Notification } from '@librekanban/shared';
 import { and, desc, eq, isNull } from 'drizzle-orm';
+import type { Deps } from '../lib/context';
 
 interface NewNotification {
   recipientId: string;
@@ -55,4 +62,72 @@ export async function markAllRead(db: Database, userId: string): Promise<void> {
     .update(notifications)
     .set({ readAt: new Date() })
     .where(and(eq(notifications.recipientId, userId), isNull(notifications.readAt)));
+}
+
+export async function getEmailEnabled(
+  db: Database,
+  userId: string,
+  workspaceId: string,
+): Promise<boolean> {
+  const rows = await db
+    .select({ emailEnabled: notificationPreferences.emailEnabled })
+    .from(notificationPreferences)
+    .where(
+      and(
+        eq(notificationPreferences.userId, userId),
+        eq(notificationPreferences.workspaceId, workspaceId),
+      ),
+    )
+    .limit(1);
+  return rows[0]?.emailEnabled ?? true; // default: email on
+}
+
+export async function setEmailEnabled(
+  db: Database,
+  userId: string,
+  workspaceId: string,
+  emailEnabled: boolean,
+): Promise<void> {
+  await db
+    .insert(notificationPreferences)
+    .values({ userId, workspaceId, emailEnabled })
+    .onConflictDoUpdate({
+      target: [notificationPreferences.userId, notificationPreferences.workspaceId],
+      set: { emailEnabled },
+    });
+}
+
+interface NotifyInput {
+  recipientId: string;
+  workspaceId: string;
+  type: string;
+  data?: Record<string, unknown>;
+  email?: { subject: string; html: string };
+}
+
+/**
+ * Create an in-app notification and (when SMTP is configured and the recipient
+ * hasn't opted out) send an email — fire-and-forget so it never blocks/fails
+ * the request.
+ */
+export async function notify(deps: Deps, input: NotifyInput): Promise<void> {
+  await createNotification(deps.db, {
+    recipientId: input.recipientId,
+    workspaceId: input.workspaceId,
+    type: input.type,
+    data: input.data,
+  });
+  if (!input.email || !deps.email.enabled) return;
+  if (!(await getEmailEnabled(deps.db, input.recipientId, input.workspaceId))) return;
+  const rows = await deps.db
+    .select({ email: user.email })
+    .from(user)
+    .where(eq(user.id, input.recipientId))
+    .limit(1);
+  const to = rows[0]?.email;
+  if (to) {
+    void deps.email
+      .send(to, input.email.subject, input.email.html)
+      .catch((err) => deps.logger.warn({ err }, 'email send failed'));
+  }
 }

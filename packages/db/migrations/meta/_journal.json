@@ -15,6 +15,13 @@
       "when": 1781555803413,
       "tag": "0001_lean_cargill",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781558707875,
+      "tag": "0002_friendly_cassandra_nova",
+      "breakpoints": true
     }
   ]
 }

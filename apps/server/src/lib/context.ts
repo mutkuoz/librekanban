@@ -5,6 +5,7 @@ import type { Logger } from 'pino';
 import type { Env } from '../env';
 import type { EventBus } from '../realtime/event-bus';
 import type { PresenceTracker } from '../realtime/presence';
+import type { Emailer } from '../services/email.service';
 
 /** Everything the app needs, built once at the composition root and injected. */
 export interface Deps {
@@ -14,6 +15,7 @@ export interface Deps {
   bus: EventBus;
   presence: PresenceTracker;
   storage: StorageBackend;
+  email: Emailer;
   logger: Logger;
 }
 

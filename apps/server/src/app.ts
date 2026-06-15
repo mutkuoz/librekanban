@@ -1,6 +1,7 @@
 import { swaggerUI } from '@hono/swagger-ui';
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { sql } from 'drizzle-orm';
+import type { MiddlewareHandler } from 'hono';
 import { requestId } from 'hono/request-id';
 import { secureHeaders } from 'hono/secure-headers';
 import type { AppEnv, Deps } from './lib/context';
@@ -9,8 +10,13 @@ import { authMiddleware } from './middleware/auth';
 import { createApiRoutes } from './routes';
 import { serveSpa } from './static';
 
+export interface RateLimiters {
+  auth: MiddlewareHandler<AppEnv>;
+  api: MiddlewareHandler<AppEnv>;
+}
+
 /** Compose the full HTTP application around injected dependencies. */
-export function createApp(deps: Deps) {
+export function createApp(deps: Deps, rateLimiters: RateLimiters) {
   const app = new OpenAPIHono<AppEnv>();
 
   // Inject deps + a request id into every request, first.
@@ -34,11 +40,14 @@ export function createApp(deps: Deps) {
   });
 
   // better-auth owns sign-up/in/out, OAuth and session endpoints under /api/auth/*.
-  // Registered before the authMiddleware below so it is never gated by it.
+  // Rate-limit registered first so it covers the auth handler; the handler is
+  // registered before authMiddleware so it is never gated by it.
+  app.use('/api/auth/*', rateLimiters.auth);
   app.on(['GET', 'POST'], '/api/auth/*', (c) => deps.auth.handler(c.req.raw));
 
-  // Resolve the session for the rest of the API, then mount the authed routes.
+  // Resolve the session for the rest of the API, rate-limit it, then mount routes.
   app.use('/api/*', authMiddleware);
+  app.use('/api/*', rateLimiters.api);
   app.route('/api', createApiRoutes());
 
   // OpenAPI document + interactive docs.

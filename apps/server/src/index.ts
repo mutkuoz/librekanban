@@ -5,12 +5,16 @@ import { createAuth } from '@librekanban/auth';
 import { MIGRATIONS_DIR, createDb } from '@librekanban/db';
 import { type StorageConfig, createStorage } from '@librekanban/storage';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import Redis from 'ioredis';
 import { pino } from 'pino';
 import { createApp } from './app';
 import { type Env, loadEnv } from './env';
 import type { Deps } from './lib/context';
+import { createRateLimiters } from './middleware/rate-limit';
 import { createInProcessBus } from './realtime/event-bus';
 import { createPresenceTracker } from './realtime/presence';
+import { createRedisBus } from './realtime/redis-bus';
+import { createEmailer } from './services/email.service';
 import { attachWebSocketServer } from './ws';
 
 const ADVISORY_LOCK_KEY = 727274; // arbitrary, stable across replicas
@@ -72,17 +76,24 @@ async function main(): Promise<void> {
     socialProviders: buildSocialProviders(env),
   });
 
+  // Redis (optional) powers multi-node realtime fan-out + shared rate limiting.
+  if (env.REDIS_URL) logger.info('Redis enabled for realtime + rate limiting');
+  const rateLimitRedis = env.REDIS_URL
+    ? new Redis(env.REDIS_URL, { maxRetriesPerRequest: null })
+    : null;
+
   const deps: Deps = {
     env,
     db,
     auth,
-    bus: createInProcessBus(),
+    bus: env.REDIS_URL ? createRedisBus(env.REDIS_URL) : createInProcessBus(),
     presence: createPresenceTracker(),
     storage: createStorage(buildStorageConfig(env)),
+    email: createEmailer(env, logger),
     logger,
   };
 
-  const app = createApp(deps);
+  const app = createApp(deps, createRateLimiters(env, rateLimitRedis));
   const server = serve({ fetch: app.fetch, port: env.PORT }, (info) =>
     logger.info(`librekanban listening on http://localhost:${info.port}`),
   ) as unknown as Server;

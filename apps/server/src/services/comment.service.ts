@@ -1,12 +1,12 @@
 import { type Database, cardAssignees, cards, comments, newId, user } from '@librekanban/db';
-import type { Comment, CreateCommentInput } from '@librekanban/shared';
-import { can } from '@librekanban/shared';
+import { type Comment, type CreateCommentInput, can, parseMentions } from '@librekanban/shared';
 import { and, asc, eq, isNull } from 'drizzle-orm';
 import type { Deps } from '../lib/context';
 import { forbidden, notFound } from '../lib/errors';
 import { recordActivity } from './activity';
-import { createNotification } from './notification.service';
+import { notify } from './notification.service';
 import { assertBoardPermission } from './permissions';
+import { listWorkspaceMembers } from './workspace.service';
 
 type CommentRow = typeof comments.$inferSelect;
 type Author = { id: string; name: string; image: string | null } | null;
@@ -70,18 +70,39 @@ export async function createComment(
   });
   deps.bus.publish({ type: 'comment.updated', boardId, entityId: cardId, actorId: userId });
 
-  // Notify everyone assigned to the card (except the comment author).
-  const assignees = await deps.db
-    .select({ userId: cardAssignees.userId })
-    .from(cardAssignees)
-    .where(eq(cardAssignees.cardId, cardId));
+  // Notify mentioned members and card assignees (mention takes precedence; skip author).
+  const [members, assignees] = await Promise.all([
+    listWorkspaceMembers(deps.db, board.workspaceId),
+    deps.db
+      .select({ userId: cardAssignees.userId })
+      .from(cardAssignees)
+      .where(eq(cardAssignees.cardId, cardId)),
+  ]);
+  const link = `${deps.env.PUBLIC_URL}/b/${boardId}`;
+  const mentioned = new Set(parseMentions(input.body, members).filter((id) => id !== userId));
+  for (const id of mentioned) {
+    await notify(deps, {
+      recipientId: id,
+      workspaceId: board.workspaceId,
+      type: 'comment.mention',
+      data: { cardId, boardId },
+      email: {
+        subject: 'You were mentioned in a comment',
+        html: `<p>You were mentioned in a comment.</p><p><a href="${link}">Open the board</a></p>`,
+      },
+    });
+  }
   for (const a of assignees) {
-    if (a.userId !== userId) {
-      await createNotification(deps.db, {
+    if (a.userId !== userId && !mentioned.has(a.userId)) {
+      await notify(deps, {
         recipientId: a.userId,
         workspaceId: board.workspaceId,
         type: 'comment.added',
         data: { cardId, boardId },
+        email: {
+          subject: 'New comment on a card you follow',
+          html: `<p>There's a new comment on a card you're assigned to.</p><p><a href="${link}">Open the board</a></p>`,
+        },
       });
     }
   }

@@ -1,5 +1,6 @@
 import { requireAuth } from '../middleware/auth';
 import { makeRouter } from './_helpers';
+import { attachmentRoutes } from './attachments';
 import { boardRoutes } from './boards';
 import { cardRoutes } from './cards';
 import { checklistRoutes } from './checklists';
@@ -23,5 +24,6 @@ export function createApiRoutes() {
   api.route('/', labelRoutes);
   api.route('/', commentRoutes);
   api.route('/', checklistRoutes);
+  api.route('/', attachmentRoutes);
   return api;
 }

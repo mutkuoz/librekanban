@@ -66,6 +66,7 @@ export const boardCardSchema = cardSchema.extend({
   checklistDone: z.number().int(),
   checklistTotal: z.number().int(),
   commentCount: z.number().int(),
+  attachmentCount: z.number().int(),
 });
 
 export type CreateCardInput = z.infer<typeof createCardSchema>;

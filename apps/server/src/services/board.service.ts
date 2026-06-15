@@ -1,5 +1,6 @@
 import {
   type Database,
+  attachments,
   boards,
   cardAssignees,
   cardLabels,
@@ -187,7 +188,7 @@ async function enrichBoardCards(
 ): Promise<BoardCard[]> {
   if (cardRows.length === 0) return [];
 
-  const [labelRows, assigneeRows, checklistRows, commentRows] = await Promise.all([
+  const [labelRows, assigneeRows, checklistRows, commentRows, attachmentRows] = await Promise.all([
     db
       .select({ cardId: cardLabels.cardId, labelId: cardLabels.labelId })
       .from(cardLabels)
@@ -209,6 +210,11 @@ async function enrichBoardCards(
       .from(comments)
       .innerJoin(cards, eq(cards.id, comments.cardId))
       .where(and(eq(cards.boardId, boardId), isNull(comments.deletedAt))),
+    db
+      .select({ cardId: attachments.cardId })
+      .from(attachments)
+      .innerJoin(cards, eq(cards.id, attachments.cardId))
+      .where(eq(cards.boardId, boardId)),
   ]);
 
   const push = (map: Map<string, string[]>, key: string, value: string) => {
@@ -229,6 +235,9 @@ async function enrichBoardCards(
   }
   const commentCount = new Map<string, number>();
   for (const r of commentRows) commentCount.set(r.cardId, (commentCount.get(r.cardId) ?? 0) + 1);
+  const attachmentCount = new Map<string, number>();
+  for (const r of attachmentRows)
+    attachmentCount.set(r.cardId, (attachmentCount.get(r.cardId) ?? 0) + 1);
 
   return cardRows.map((c) => ({
     ...toCardDTO(c),
@@ -237,6 +246,7 @@ async function enrichBoardCards(
     checklistDone: checks.get(c.id)?.done ?? 0,
     checklistTotal: checks.get(c.id)?.total ?? 0,
     commentCount: commentCount.get(c.id) ?? 0,
+    attachmentCount: attachmentCount.get(c.id) ?? 0,
   }));
 }
 
