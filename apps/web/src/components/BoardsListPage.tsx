@@ -1,7 +1,8 @@
+import { ImportDialog } from '@/components/ImportDialog';
 import { Button } from '@/components/ui/button';
 import { useBoards, useCreateBoard } from '@/lib/queries';
 import { Link } from '@tanstack/react-router';
-import { Loader2, Plus } from 'lucide-react';
+import { Loader2, Plus, Upload } from 'lucide-react';
 import { useState } from 'react';
 
 export function BoardsListPage() {
@@ -9,6 +10,7 @@ export function BoardsListPage() {
   const create = useCreateBoard();
   const [name, setName] = useState('');
   const [creating, setCreating] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   const submit = async () => {
     const n = name.trim();
@@ -23,11 +25,18 @@ export function BoardsListPage() {
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-xl font-semibold">Your boards</h1>
         {!creating && (
-          <Button onClick={() => setCreating(true)}>
-            <Plus className="size-4" /> New board
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={() => setImporting(true)}>
+              <Upload className="size-4" /> Import
+            </Button>
+            <Button onClick={() => setCreating(true)}>
+              <Plus className="size-4" /> New board
+            </Button>
+          </div>
         )}
       </div>
+
+      {importing && <ImportDialog onClose={() => setImporting(false)} />}
 
       {creating && (
         <div className="mb-6 flex gap-2">

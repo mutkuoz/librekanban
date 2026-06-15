@@ -17,6 +17,7 @@
     "@hono/zod-openapi": "^1.4.0",
     "@librekanban/auth": "workspace:*",
     "@librekanban/db": "workspace:*",
+    "@librekanban/importers": "workspace:*",
     "@librekanban/shared": "workspace:*",
     "@librekanban/storage": "workspace:*",
     "dotenv": "^16.4.7",

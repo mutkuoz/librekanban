@@ -7,6 +7,7 @@ import { checklistRoutes } from './checklists';
 import { columnRoutes } from './columns';
 import { commentRoutes } from './comments';
 import { customFieldRoutes } from './custom-fields';
+import { importRoutes } from './import';
 import { labelRoutes } from './labels';
 import { meRoutes } from './me';
 import { memberRoutes } from './members';
@@ -27,5 +28,6 @@ export function createApiRoutes() {
   api.route('/', checklistRoutes);
   api.route('/', attachmentRoutes);
   api.route('/', customFieldRoutes);
+  api.route('/', importRoutes);
   return api;
 }

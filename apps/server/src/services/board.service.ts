@@ -142,6 +142,89 @@ export async function createBoardWithDefaults(
   });
 }
 
+/** Create a board from imported data: columns by name + cards bucketed into them. */
+export async function createImportedBoard(
+  db: Database,
+  input: {
+    workspaceId: string;
+    userId: string;
+    name: string;
+    columnNames: string[];
+    cards: { title: string; description?: string; columnName: string }[];
+  },
+): Promise<string> {
+  const columnNames = input.columnNames.length ? input.columnNames : ['Imported'];
+  const position = await nextBoardPosition(db, input.workspaceId);
+  const boardId = newId();
+  const swimlaneId = newId();
+  const colPositions = initialPositions(columnNames.length);
+  const colIdByName = new Map<string, string>();
+
+  return db.transaction(async (tx) => {
+    await tx.insert(boards).values({
+      id: boardId,
+      workspaceId: input.workspaceId,
+      name: input.name,
+      slug: `${slugify(input.name)}-${boardId.slice(-6).toLowerCase()}`,
+      position,
+      createdBy: input.userId,
+      cardCounter: input.cards.length,
+    });
+    await tx.insert(swimlanes).values({
+      id: swimlaneId,
+      boardId,
+      name: 'Default',
+      isDefault: true,
+      position: positionBetween(null, null),
+    });
+    await tx.insert(columns).values(
+      columnNames.map((name, i) => {
+        const id = newId();
+        colIdByName.set(name, id);
+        return { id, boardId, name, position: colPositions[i]! };
+      }),
+    );
+
+    const buckets = new Map<string, typeof input.cards>();
+    for (const c of input.cards) {
+      const col = colIdByName.has(c.columnName) ? c.columnName : columnNames[0]!;
+      const arr = buckets.get(col);
+      if (arr) arr.push(c);
+      else buckets.set(col, [c]);
+    }
+    const cardRows: (typeof cards.$inferInsert)[] = [];
+    let number = 0;
+    for (const name of columnNames) {
+      const bucket = buckets.get(name) ?? [];
+      const positions = initialPositions(bucket.length);
+      bucket.forEach((c, i) => {
+        number += 1;
+        cardRows.push({
+          id: newId(),
+          boardId,
+          columnId: colIdByName.get(name)!,
+          swimlaneId,
+          number,
+          title: c.title,
+          description: c.description ?? null,
+          position: positions[i]!,
+          createdBy: input.userId,
+        });
+      });
+    }
+    if (cardRows.length > 0) await tx.insert(cards).values(cardRows);
+
+    await recordActivity(tx, {
+      workspaceId: input.workspaceId,
+      boardId,
+      actorId: input.userId,
+      verb: 'board.created',
+      data: { name: input.name, imported: true },
+    });
+    return boardId;
+  });
+}
+
 export async function listBoards(deps: Deps, userId: string): Promise<Board[]> {
   const workspaceId = await primaryWorkspaceId(deps.db, userId);
   if (!workspaceId) return [];

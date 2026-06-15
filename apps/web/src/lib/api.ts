@@ -152,4 +152,25 @@ export const api = {
     req<{ ok: boolean }>('DELETE', `/custom-fields/${fieldId}`),
   setCustomFieldValue: (cardId: string, fieldId: string, value: unknown) =>
     req<{ ok: boolean }>('PUT', `/cards/${cardId}/custom-fields/${fieldId}`, { value }),
+
+  importCsv: async (file: File, name: string): Promise<{ boardId: string }> => {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('name', name);
+    return uploadForm('/api/import/csv', fd);
+  },
+  importTrello: async (file: File): Promise<{ boardId: string }> => {
+    const fd = new FormData();
+    fd.append('file', file);
+    return uploadForm('/api/import/trello', fd);
+  },
 };
+
+async function uploadForm<T>(path: string, fd: FormData): Promise<T> {
+  const res = await fetch(path, { method: 'POST', credentials: 'include', body: fd });
+  if (!res.ok) {
+    const data = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
+    throw new ApiError(res.status, 'upload_failed', data?.error?.message ?? 'Upload failed');
+  }
+  return res.json() as Promise<T>;
+}

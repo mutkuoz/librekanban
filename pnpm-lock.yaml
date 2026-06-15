@@ -41,6 +41,9 @@ importers:
       '@librekanban/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@librekanban/importers':
+        specifier: workspace:*
+        version: link:../../packages/importers
       '@librekanban/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -228,6 +231,15 @@ importers:
       typescript:
         specifier: ^5.7.3
         version: 5.9.3
+
+  packages/importers:
+    devDependencies:
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@22.19.21)(lightningcss@1.32.0)
 
   packages/shared:
     dependencies:
