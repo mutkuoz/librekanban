@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+.turbo/
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+
+# Data & uploads (local self-host)
+data/
+uploads/
+*.sqlite
+*.sqlite-journal
+*.db
+
+# Logs
+*.log
+logs/
+
+# Test artifacts
+coverage/
+playwright-report/
+test-results/
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
