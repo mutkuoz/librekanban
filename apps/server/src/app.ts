@@ -7,6 +7,7 @@ import type { AppEnv, Deps } from './lib/context';
 import { handleError } from './lib/errors';
 import { authMiddleware } from './middleware/auth';
 import { createApiRoutes } from './routes';
+import { serveSpa } from './static';
 
 /** Compose the full HTTP application around injected dependencies. */
 export function createApp(deps: Deps) {
@@ -46,6 +47,9 @@ export function createApp(deps: Deps) {
     info: { title: 'librekanban API', version: '0.1.0' },
   });
   app.get('/api/docs', swaggerUI({ url: '/api/openapi.json' }));
+
+  // In production (single-container), also serve the built SPA.
+  if (deps.env.STATIC_DIR) serveSpa(app, deps.env.STATIC_DIR);
 
   return app;
 }

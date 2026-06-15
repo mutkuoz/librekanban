@@ -1,0 +1,50 @@
+# Production-ish single-command deploy: Postgres + the librekanban app
+# (server + bundled SPA on one port). From the repo root:
+#
+#   cp .env.example .env   # set AUTH_SECRET
+#   docker compose -f docker/docker-compose.yml up -d
+#
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: librekanban
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-librekanban}
+      POSTGRES_DB: librekanban
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U librekanban -d librekanban']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PUBLIC_URL: ${PUBLIC_URL:-http://localhost:3000}
+      DATABASE_URL: postgres://librekanban:${POSTGRES_PASSWORD:-librekanban}@db:5432/librekanban
+      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in .env (openssl rand -base64 32)}
+      AUTO_MIGRATE: 'true'
+      SIGNUP_MODE: ${SIGNUP_MODE:-open}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      STORAGE_LOCAL_DIR: /app/data/uploads
+    ports:
+      - '${PORT:-3000}:3000'
+    volumes:
+      - uploads:/app/data/uploads
+
+volumes:
+  pgdata:
+  uploads:

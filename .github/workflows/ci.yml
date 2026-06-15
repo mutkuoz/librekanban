@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: librekanban
+          POSTGRES_PASSWORD: librekanban
+          POSTGRES_DB: librekanban
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U librekanban -d librekanban"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://librekanban:librekanban@localhost:5432/librekanban
+      AUTH_SECRET: ci-secret-ci-secret-ci-secret-123
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Lint & format check
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Apply migrations (verify schema)
+        run: pnpm db:migrate
+
+      - name: Build web
+        run: pnpm --filter @librekanban/web build

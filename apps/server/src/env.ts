@@ -27,6 +27,10 @@ const envSchema = z.object({
 
   REDIS_URL: z.string().optional(),
 
+  // Absolute path to the built web SPA. When set, the server also serves the
+  // frontend (single-container deploy). Unset in dev (Vite serves the SPA).
+  STATIC_DIR: z.string().optional(),
+
   STORAGE_BACKEND: z.enum(STORAGE_BACKENDS).default('local'),
   STORAGE_LOCAL_DIR: z.string().default('./data/uploads'),
   S3_ENDPOINT: z.string().optional(),
