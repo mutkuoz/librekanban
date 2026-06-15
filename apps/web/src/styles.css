@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+/* Enable class-based dark mode (the <html> element carries `.dark`). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-bg: oklch(0.16 0.01 260);
+  --color-surface: oklch(0.21 0.012 260);
+  --color-surface-2: oklch(0.25 0.014 260);
+  --color-border: oklch(0.3 0.015 260);
+  --color-text: oklch(0.97 0.005 260);
+  --color-muted: oklch(0.7 0.012 260);
+  --color-brand: oklch(0.62 0.19 264);
+  --color-brand-fg: oklch(0.98 0.01 264);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Thin, unobtrusive scrollbars for the board's horizontal scroll. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}

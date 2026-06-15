@@ -27,6 +27,8 @@ export const boardSchema = z.object({
   updatedAt: z.string(),
 });
 
-export type CreateBoardInput = z.infer<typeof createBoardSchema>;
+// `z.input` so fields with server-side defaults (e.g. visibility) are optional
+// for callers; the server still receives the fully-defaulted output type.
+export type CreateBoardInput = z.input<typeof createBoardSchema>;
 export type UpdateBoardInput = z.infer<typeof updateBoardSchema>;
 export type Board = z.infer<typeof boardSchema>;
