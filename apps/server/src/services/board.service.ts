@@ -9,6 +9,7 @@ import {
   checklists,
   columns,
   comments,
+  customFieldValues,
   labels,
   newId,
   swimlanes,
@@ -17,6 +18,7 @@ import type {
   Board,
   BoardCard,
   CreateBoardInput,
+  CustomField,
   UpdateBoardInput,
   WorkspaceRole,
 } from '@librekanban/shared';
@@ -26,6 +28,7 @@ import { forbidden, notFound } from '../lib/errors';
 import { toBoardDTO, toCardDTO, toColumnDTO } from '../lib/serialize';
 import { slugify } from '../lib/slug';
 import { recordActivity } from './activity';
+import { listCustomFields } from './custom-field.service';
 import { initialPositions, positionBetween } from './ordering';
 import {
   assertBoardPermission,
@@ -177,6 +180,7 @@ export interface BoardDetail {
   columns: ReturnType<typeof toColumnDTO>[];
   swimlanes: { id: string; name: string; isDefault: boolean; position: string }[];
   labels: { id: string; name: string; color: string; position: string }[];
+  customFields: CustomField[];
   cards: BoardCard[];
 }
 
@@ -188,34 +192,44 @@ async function enrichBoardCards(
 ): Promise<BoardCard[]> {
   if (cardRows.length === 0) return [];
 
-  const [labelRows, assigneeRows, checklistRows, commentRows, attachmentRows] = await Promise.all([
-    db
-      .select({ cardId: cardLabels.cardId, labelId: cardLabels.labelId })
-      .from(cardLabels)
-      .innerJoin(cards, eq(cards.id, cardLabels.cardId))
-      .where(eq(cards.boardId, boardId)),
-    db
-      .select({ cardId: cardAssignees.cardId, userId: cardAssignees.userId })
-      .from(cardAssignees)
-      .innerJoin(cards, eq(cards.id, cardAssignees.cardId))
-      .where(eq(cards.boardId, boardId)),
-    db
-      .select({ cardId: checklists.cardId, isDone: checklistItems.isDone })
-      .from(checklistItems)
-      .innerJoin(checklists, eq(checklists.id, checklistItems.checklistId))
-      .innerJoin(cards, eq(cards.id, checklists.cardId))
-      .where(eq(cards.boardId, boardId)),
-    db
-      .select({ cardId: comments.cardId })
-      .from(comments)
-      .innerJoin(cards, eq(cards.id, comments.cardId))
-      .where(and(eq(cards.boardId, boardId), isNull(comments.deletedAt))),
-    db
-      .select({ cardId: attachments.cardId })
-      .from(attachments)
-      .innerJoin(cards, eq(cards.id, attachments.cardId))
-      .where(eq(cards.boardId, boardId)),
-  ]);
+  const [labelRows, assigneeRows, checklistRows, commentRows, attachmentRows, cfValueRows] =
+    await Promise.all([
+      db
+        .select({ cardId: cardLabels.cardId, labelId: cardLabels.labelId })
+        .from(cardLabels)
+        .innerJoin(cards, eq(cards.id, cardLabels.cardId))
+        .where(eq(cards.boardId, boardId)),
+      db
+        .select({ cardId: cardAssignees.cardId, userId: cardAssignees.userId })
+        .from(cardAssignees)
+        .innerJoin(cards, eq(cards.id, cardAssignees.cardId))
+        .where(eq(cards.boardId, boardId)),
+      db
+        .select({ cardId: checklists.cardId, isDone: checklistItems.isDone })
+        .from(checklistItems)
+        .innerJoin(checklists, eq(checklists.id, checklistItems.checklistId))
+        .innerJoin(cards, eq(cards.id, checklists.cardId))
+        .where(eq(cards.boardId, boardId)),
+      db
+        .select({ cardId: comments.cardId })
+        .from(comments)
+        .innerJoin(cards, eq(cards.id, comments.cardId))
+        .where(and(eq(cards.boardId, boardId), isNull(comments.deletedAt))),
+      db
+        .select({ cardId: attachments.cardId })
+        .from(attachments)
+        .innerJoin(cards, eq(cards.id, attachments.cardId))
+        .where(eq(cards.boardId, boardId)),
+      db
+        .select({
+          cardId: customFieldValues.cardId,
+          fieldId: customFieldValues.fieldId,
+          value: customFieldValues.value,
+        })
+        .from(customFieldValues)
+        .innerJoin(cards, eq(cards.id, customFieldValues.cardId))
+        .where(eq(cards.boardId, boardId)),
+    ]);
 
   const push = (map: Map<string, string[]>, key: string, value: string) => {
     const arr = map.get(key);
@@ -238,6 +252,12 @@ async function enrichBoardCards(
   const attachmentCount = new Map<string, number>();
   for (const r of attachmentRows)
     attachmentCount.set(r.cardId, (attachmentCount.get(r.cardId) ?? 0) + 1);
+  const cfValues = new Map<string, Record<string, unknown>>();
+  for (const r of cfValueRows) {
+    const m = cfValues.get(r.cardId) ?? {};
+    m[r.fieldId] = r.value;
+    cfValues.set(r.cardId, m);
+  }
 
   return cardRows.map((c) => ({
     ...toCardDTO(c),
@@ -247,6 +267,7 @@ async function enrichBoardCards(
     checklistTotal: checks.get(c.id)?.total ?? 0,
     commentCount: commentCount.get(c.id) ?? 0,
     attachmentCount: attachmentCount.get(c.id) ?? 0,
+    customFieldValues: cfValues.get(c.id) ?? {},
   }));
 }
 
@@ -292,6 +313,7 @@ export async function getBoardDetail(
       color: l.color,
       position: l.position,
     })),
+    customFields: await listCustomFields(deps.db, boardId),
     cards: await enrichBoardCards(deps.db, boardId, cardRows),
   };
 }

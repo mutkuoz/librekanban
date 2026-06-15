@@ -10,6 +10,7 @@ import {
 import { cn } from '@/lib/utils';
 import {
   type Checklist,
+  type CustomField,
   type Label,
   PRIORITIES,
   type Priority,
@@ -32,12 +33,14 @@ export function CardModal({
   boardId,
   labels,
   members,
+  customFields,
   onClose,
 }: {
   cardId: string;
   boardId: string;
   labels: Label[];
   members: WorkspaceMember[];
+  customFields: CustomField[];
   onClose: () => void;
 }) {
   const { data: card, isLoading } = useCardDetail(cardId);
@@ -234,6 +237,21 @@ export function CardModal({
                 />
               </section>
 
+              {/* Custom fields */}
+              {customFields.length > 0 && (
+                <section className="space-y-2">
+                  <SectionTitle>Custom fields</SectionTitle>
+                  {customFields.map((f) => (
+                    <CustomFieldRow
+                      key={f.id}
+                      field={f}
+                      value={card.customFieldValues[f.id]}
+                      onSet={(v) => run(() => api.setCustomFieldValue(cardId, f.id, v))}
+                    />
+                  ))}
+                </section>
+              )}
+
               {/* Checklists */}
               <section className="space-y-3">
                 <SectionTitle>Checklists</SectionTitle>
@@ -392,6 +410,73 @@ export function CardModal({
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
+  );
+}
+
+const fieldInputCls =
+  'flex-1 rounded-md border border-border bg-bg px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-brand/60';
+
+function CustomFieldRow({
+  field,
+  value,
+  onSet,
+}: {
+  field: CustomField;
+  value: unknown;
+  onSet: (v: unknown) => void;
+}) {
+  const label = <span className="w-28 shrink-0 text-sm text-muted">{field.name}</span>;
+  if (field.type === 'checkbox') {
+    return (
+      <label className="flex items-center gap-2">
+        {label}
+        <input type="checkbox" checked={Boolean(value)} onChange={(e) => onSet(e.target.checked)} />
+      </label>
+    );
+  }
+  if (field.type === 'select') {
+    return (
+      <label className="flex items-center gap-2">
+        {label}
+        <select
+          value={typeof value === 'string' ? value : ''}
+          onChange={(e) => onSet(e.target.value || null)}
+          className={fieldInputCls}
+        >
+          <option value="">—</option>
+          {(field.config.options ?? []).map((o) => (
+            <option key={o} value={o}>
+              {o}
+            </option>
+          ))}
+        </select>
+      </label>
+    );
+  }
+  const inputType =
+    field.type === 'number'
+      ? 'number'
+      : field.type === 'date'
+        ? 'date'
+        : field.type === 'url'
+          ? 'url'
+          : field.type === 'email'
+            ? 'email'
+            : 'text';
+  return (
+    <label className="flex items-center gap-2">
+      {label}
+      <input
+        type={inputType}
+        defaultValue={value == null ? '' : String(value)}
+        onBlur={(e) => {
+          const raw = e.target.value;
+          if (field.type === 'number') onSet(raw === '' ? null : Number(raw));
+          else onSet(raw || null);
+        }}
+        className={fieldInputCls}
+      />
+    </label>
   );
 }
 

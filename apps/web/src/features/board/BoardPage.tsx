@@ -1,10 +1,11 @@
 import { useBoard, useBoardRealtime, useMembers } from '@/lib/queries';
 import { type Presence, can } from '@librekanban/shared';
 import { Link } from '@tanstack/react-router';
-import { Search } from 'lucide-react';
+import { Search, SlidersHorizontal } from 'lucide-react';
 import { useState } from 'react';
 import { type BoardFilter, BoardView } from './BoardView';
 import { CardModal } from './CardModal';
+import { CustomFieldsDialog } from './CustomFieldsDialog';
 
 function Avatars({ users }: { users: Presence['users'] }) {
   if (users.length === 0) return null;
@@ -28,6 +29,7 @@ export function BoardPage({ boardId }: { boardId: string }) {
   const { data: members } = useMembers();
   const presence = useBoardRealtime(boardId);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [fieldsOpen, setFieldsOpen] = useState(false);
   const [filter, setFilter] = useState<BoardFilter>({ text: '', labelId: null, assigneeId: null });
 
   if (isLoading)
@@ -39,6 +41,7 @@ export function BoardPage({ boardId }: { boardId: string }) {
 
   const memberList = members ?? [];
   const canEdit = can(data.role, 'card:create');
+  const canManageFields = can(data.role, 'customField:manage');
   const selectCls = 'h-8 rounded-md border border-border bg-surface px-2 text-sm outline-none';
 
   return (
@@ -85,6 +88,16 @@ export function BoardPage({ boardId }: { boardId: string }) {
               </option>
             ))}
           </select>
+          {canManageFields && (
+            <button
+              type="button"
+              onClick={() => setFieldsOpen(true)}
+              title="Custom fields"
+              className="grid size-8 place-items-center rounded-md border border-border bg-surface text-muted hover:text-text"
+            >
+              <SlidersHorizontal className="size-4" />
+            </button>
+          )}
           <Avatars users={presence} />
         </div>
       </header>
@@ -105,7 +118,16 @@ export function BoardPage({ boardId }: { boardId: string }) {
           boardId={boardId}
           labels={data.labels}
           members={memberList}
+          customFields={data.customFields}
           onClose={() => setSelectedId(null)}
+        />
+      )}
+
+      {fieldsOpen && (
+        <CustomFieldsDialog
+          boardId={boardId}
+          fields={data.customFields}
+          onClose={() => setFieldsOpen(false)}
         />
       )}
     </div>

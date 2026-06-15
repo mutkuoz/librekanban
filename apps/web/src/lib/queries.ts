@@ -111,6 +111,19 @@ export function useDeleteColumn(boardId: string) {
   });
 }
 
+export function useCustomFieldAdmin(boardId: string) {
+  const qc = useQueryClient();
+  const invalidate = () => invalidateBoard(qc, boardId);
+  return {
+    create: useMutation({
+      mutationFn: (input: Parameters<typeof api.createCustomField>[1]) =>
+        api.createCustomField(boardId, input),
+      onSuccess: invalidate,
+    }),
+    remove: useMutation({ mutationFn: api.deleteCustomField, onSuccess: invalidate }),
+  };
+}
+
 export function useCardActivity(cardId: string | null) {
   return useQuery({
     queryKey: ['card-activity', cardId],

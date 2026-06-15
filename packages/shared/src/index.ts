@@ -11,6 +11,7 @@ export * from './schemas/attachment';
 export * from './schemas/comment';
 export * from './schemas/checklist';
 export * from './schemas/member';
+export * from './schemas/custom-field';
 export * from './schemas/activity';
 export * from './schemas/notification';
 export * from './schemas/realtime';

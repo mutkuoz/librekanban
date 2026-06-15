@@ -27,6 +27,7 @@ import { recordActivity } from './activity';
 import { listAttachments } from './attachment.service';
 import { listChecklists } from './checklist.service';
 import { listComments } from './comment.service';
+import { listCardCustomValues } from './custom-field.service';
 import { notify } from './notification.service';
 import { positionBetween } from './ordering';
 import { assertBoardPermission } from './permissions';
@@ -334,19 +335,21 @@ export async function getCardDetail(
   const card = await loadCard(deps.db, cardId);
   await assertBoardPermission(deps.db, userId, card.boardId, 'board:read');
 
-  const [labelRows, assigneeRows, checklists, comments, attachments] = await Promise.all([
-    deps.db
-      .select({ labelId: cardLabels.labelId })
-      .from(cardLabels)
-      .where(eq(cardLabels.cardId, cardId)),
-    deps.db
-      .select({ userId: cardAssignees.userId })
-      .from(cardAssignees)
-      .where(eq(cardAssignees.cardId, cardId)),
-    listChecklists(deps.db, cardId),
-    listComments(deps, userId, cardId),
-    listAttachments(deps.db, cardId),
-  ]);
+  const [labelRows, assigneeRows, checklists, comments, attachments, customFieldValues] =
+    await Promise.all([
+      deps.db
+        .select({ labelId: cardLabels.labelId })
+        .from(cardLabels)
+        .where(eq(cardLabels.cardId, cardId)),
+      deps.db
+        .select({ userId: cardAssignees.userId })
+        .from(cardAssignees)
+        .where(eq(cardAssignees.cardId, cardId)),
+      listChecklists(deps.db, cardId),
+      listComments(deps, userId, cardId),
+      listAttachments(deps.db, cardId),
+      listCardCustomValues(deps.db, cardId),
+    ]);
 
   const checklistTotal = checklists.reduce((n, c) => n + c.items.length, 0);
   const checklistDone = checklists.reduce((n, c) => n + c.items.filter((i) => i.isDone).length, 0);
@@ -359,6 +362,7 @@ export async function getCardDetail(
     checklistTotal,
     commentCount: comments.length,
     attachmentCount: attachments.length,
+    customFieldValues,
     comments,
     checklists,
     attachments,

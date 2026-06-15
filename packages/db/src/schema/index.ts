@@ -12,6 +12,7 @@ export * from './activity';
 export * from './notification';
 export * from './attachment';
 export * from './preference';
+export * from './custom-field';
 
 // ── Relations (enable Drizzle's relational query API, e.g. board + columns + cards) ──
 

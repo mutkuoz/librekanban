@@ -9,7 +9,9 @@ import type {
   CreateBoardInput,
   CreateCardInput,
   CreateColumnInput,
+  CreateCustomFieldInput,
   CreateLabelInput,
+  CustomField,
   Label,
   MoveCardInput,
   MoveColumnInput,
@@ -63,6 +65,7 @@ export interface BoardDetail {
   columns: Column[];
   swimlanes: { id: string; name: string; isDefault: boolean; position: string }[];
   labels: Label[];
+  customFields: CustomField[];
   cards: BoardCard[];
 }
 
@@ -142,4 +145,11 @@ export const api = {
     req<{ ok: boolean }>('PATCH', `/checklist-items/${itemId}`, input),
   deleteChecklistItem: (itemId: string) =>
     req<{ ok: boolean }>('DELETE', `/checklist-items/${itemId}`),
+
+  createCustomField: (boardId: string, input: CreateCustomFieldInput) =>
+    req<CustomField>('POST', `/boards/${boardId}/custom-fields`, input),
+  deleteCustomField: (fieldId: string) =>
+    req<{ ok: boolean }>('DELETE', `/custom-fields/${fieldId}`),
+  setCustomFieldValue: (cardId: string, fieldId: string, value: unknown) =>
+    req<{ ok: boolean }>('PUT', `/cards/${cardId}/custom-fields/${fieldId}`, { value }),
 };
