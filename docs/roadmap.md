@@ -39,9 +39,11 @@ modal; managed by admins via the board's field manager.
 dependencies, advanced filtering, OIDC/SSO + 2FA/passkeys, scoped API tokens,
 webhooks (HMAC), theming/white-label, i18n, admin panel.
 
-### M5 — Polish & ops
-Importers (Kanboard, Trello, CSV/JSON) + export, backup/restore CLI, **SQLite
-"lite mode"**, metrics/observability, upgrade tooling, large-board virtualization,
-a11y + keyboard shortcuts, board/card templates, security hardening.
+### M5 — Polish & ops (in progress)
+**Done:** importers — **Kanboard/CSV** + **Trello JSON** (upload → new board,
+columns + cards).
+**Remaining:** CSV/JSON export, backup/restore CLI, SQLite "lite mode",
+metrics/observability, upgrade tooling, large-board virtualization, a11y +
+keyboard shortcuts, board/card templates, security hardening.
 
 See [`docs/architecture.md`](architecture.md) for how it's put together.
