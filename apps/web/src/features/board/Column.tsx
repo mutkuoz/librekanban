@@ -2,24 +2,28 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import type { Card, Column as ColumnType } from '@librekanban/shared';
+import type { BoardCard, Column as ColumnType, Label, WorkspaceMember } from '@librekanban/shared';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { CardItem } from './CardItem';
 
 export interface BoardList {
   column: ColumnType;
-  cards: Card[];
+  cards: BoardCard[];
 }
 
 export function Column({
   list,
+  labels,
+  members,
   onCreateCard,
   onCardClick,
 }: {
   list: BoardList;
+  labels: Label[];
+  members: WorkspaceMember[];
   onCreateCard: (columnId: string, title: string) => void;
-  onCardClick: (card: Card) => void;
+  onCardClick: (card: BoardCard) => void;
 }) {
   const [adding, setAdding] = useState(false);
   const [title, setTitle] = useState('');
@@ -59,7 +63,13 @@ export function Column({
       >
         <SortableContext items={list.cards.map((c) => c.id)} strategy={verticalListSortingStrategy}>
           {list.cards.map((card) => (
-            <CardItem key={card.id} card={card} onClick={() => onCardClick(card)} />
+            <CardItem
+              key={card.id}
+              card={card}
+              labels={labels}
+              members={members}
+              onClick={() => onCardClick(card)}
+            />
           ))}
         </SortableContext>
       </div>

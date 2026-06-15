@@ -65,13 +65,45 @@ export function useCreateColumn(boardId: string) {
   });
 }
 
+export function useMembers() {
+  return useQuery({ queryKey: ['members'], queryFn: api.members });
+}
+
+export function useCardDetail(cardId: string | null) {
+  return useQuery({
+    queryKey: ['card', cardId],
+    queryFn: () => api.getCard(cardId as string),
+    enabled: cardId != null,
+  });
+}
+
+/**
+ * One mutation for all card-content actions (labels, assignees, comments,
+ * checklists). Pass the api call to run; it invalidates both the board and the
+ * open card on success.
+ */
+export function useCardActions(boardId: string, cardId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (fn: () => Promise<unknown>) => fn(),
+    onSuccess: () =>
+      Promise.all([
+        qc.invalidateQueries({ queryKey: ['board', boardId] }),
+        qc.invalidateQueries({ queryKey: ['card', cardId] }),
+      ]),
+  });
+}
+
 /** Subscribe to live board updates; returns the current presence list. */
 export function useBoardRealtime(boardId: string): Presence['users'] {
   const qc = useQueryClient();
   const [presence, setPresence] = useState<Presence['users']>([]);
   useEffect(() => {
     const dispose = subscribeToBoard(boardId, {
-      onEvent: () => invalidateBoard(qc, boardId),
+      onEvent: (event) => {
+        invalidateBoard(qc, boardId);
+        if (event.entityId) qc.invalidateQueries({ queryKey: ['card', event.entityId] });
+      },
       onPresence: setPresence,
     });
     return dispose;

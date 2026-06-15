@@ -10,17 +10,33 @@ import {
 } from '@dnd-kit/core';
 import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
-import type { Card } from '@librekanban/shared';
+import type { BoardCard, WorkspaceMember } from '@librekanban/shared';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { type BoardList, Column } from './Column';
+
+export interface BoardFilter {
+  text: string;
+  labelId: string | null;
+  assigneeId: string | null;
+}
 
 const byPos = <T extends { position: string }>(a: T, b: T) =>
   a.position < b.position ? -1 : a.position > b.position ? 1 : 0;
 
-function groupLists(detail: BoardDetail): BoardList[] {
+function matches(card: BoardCard, filter: BoardFilter): boolean {
+  if (filter.labelId && !card.labelIds.includes(filter.labelId)) return false;
+  if (filter.assigneeId && !card.assigneeIds.includes(filter.assigneeId)) return false;
+  if (filter.text) {
+    const q = filter.text.toLowerCase();
+    if (!card.title.toLowerCase().includes(q) && !`#${card.number}`.includes(q)) return false;
+  }
+  return true;
+}
+
+function groupLists(detail: BoardDetail, filter: BoardFilter): BoardList[] {
   return [...detail.columns].sort(byPos).map((column) => ({
     column,
-    cards: detail.cards.filter((c) => c.columnId === column.id).sort(byPos),
+    cards: detail.cards.filter((c) => c.columnId === column.id && matches(c, filter)).sort(byPos),
   }));
 }
 
@@ -30,23 +46,28 @@ const containerOf = (lists: BoardList[], id: string): string | undefined =>
 
 export function BoardView({
   detail,
+  members,
+  filter,
   onCardClick,
 }: {
   detail: BoardDetail;
-  onCardClick: (card: Card) => void;
+  members: WorkspaceMember[];
+  filter: BoardFilter;
+  onCardClick: (card: BoardCard) => void;
 }) {
   const boardId = detail.board.id;
   const moveCard = useMoveCard(boardId);
   const createCard = useCreateCard(boardId);
 
-  const [lists, setLists] = useState<BoardList[]>(() => groupLists(detail));
+  const [lists, setLists] = useState<BoardList[]>(() => groupLists(detail, filter));
   const [activeId, setActiveId] = useState<string | null>(null);
   const draggingRef = useRef(false);
 
-  // Re-sync from the server whenever fresh data arrives and we're not mid-drag.
+  // Re-sync from the server whenever fresh data (or the filter) changes and
+  // we're not mid-drag.
   useEffect(() => {
-    if (!draggingRef.current) setLists(groupLists(detail));
-  }, [detail]);
+    if (!draggingRef.current) setLists(groupLists(detail, filter));
+  }, [detail, filter]);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -136,6 +157,8 @@ export function BoardView({
           <Column
             key={list.column.id}
             list={list}
+            labels={detail.labels}
+            members={members}
             onCardClick={onCardClick}
             onCreateCard={(columnId, title) => createCard.mutate({ columnId, title })}
           />

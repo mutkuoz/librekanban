@@ -1,13 +1,17 @@
 import type {
   Board,
-  Card,
-  Column,
+  BoardCard,
+  CardDetail,
+  Comment,
   CreateBoardInput,
   CreateCardInput,
   CreateColumnInput,
+  CreateLabelInput,
+  Label,
   MoveCardInput,
   MoveColumnInput,
   UpdateCardInput,
+  WorkspaceMember,
 } from '@librekanban/shared';
 
 export class ApiError extends Error {
@@ -46,27 +50,57 @@ export interface MeResponse {
 
 export interface BoardDetail {
   board: Board;
-  columns: Column[];
+  columns: import('@librekanban/shared').Column[];
   swimlanes: { id: string; name: string; isDefault: boolean; position: string }[];
-  labels: { id: string; name: string; color: string; position: string }[];
-  cards: Card[];
+  labels: Label[];
+  cards: BoardCard[];
 }
 
 export const api = {
   me: () => req<MeResponse>('GET', '/me'),
+  members: () => req<WorkspaceMember[]>('GET', '/members'),
+
   listBoards: () => req<Board[]>('GET', '/boards'),
   createBoard: (input: CreateBoardInput) => req<Board>('POST', '/boards', input),
   getBoard: (boardId: string) => req<BoardDetail>('GET', `/boards/${boardId}`),
 
   createColumn: (boardId: string, input: CreateColumnInput) =>
-    req<Column>('POST', `/boards/${boardId}/columns`, input),
+    req<import('@librekanban/shared').Column>('POST', `/boards/${boardId}/columns`, input),
   moveColumn: (columnId: string, input: MoveColumnInput) =>
-    req<Column>('POST', `/columns/${columnId}/move`, input),
+    req<import('@librekanban/shared').Column>('POST', `/columns/${columnId}/move`, input),
 
-  createCard: (input: CreateCardInput) => req<Card>('POST', '/cards', input),
+  createCard: (input: CreateCardInput) => req<BoardCard>('POST', '/cards', input),
+  getCard: (cardId: string) => req<CardDetail>('GET', `/cards/${cardId}`),
   updateCard: (cardId: string, input: UpdateCardInput) =>
-    req<Card>('PATCH', `/cards/${cardId}`, input),
+    req<BoardCard>('PATCH', `/cards/${cardId}`, input),
   moveCard: (cardId: string, input: MoveCardInput) =>
-    req<Card>('POST', `/cards/${cardId}/move`, input),
+    req<BoardCard>('POST', `/cards/${cardId}/move`, input),
   deleteCard: (cardId: string) => req<{ ok: boolean }>('DELETE', `/cards/${cardId}`),
+  assignCard: (cardId: string, userId: string) =>
+    req<{ ok: boolean }>('PUT', `/cards/${cardId}/assignees/${userId}`),
+  unassignCard: (cardId: string, userId: string) =>
+    req<{ ok: boolean }>('DELETE', `/cards/${cardId}/assignees/${userId}`),
+
+  createLabel: (boardId: string, input: CreateLabelInput) =>
+    req<Label>('POST', `/boards/${boardId}/labels`, input),
+  deleteLabel: (labelId: string) => req<{ ok: boolean }>('DELETE', `/labels/${labelId}`),
+  addCardLabel: (cardId: string, labelId: string) =>
+    req<{ ok: boolean }>('PUT', `/cards/${cardId}/labels/${labelId}`),
+  removeCardLabel: (cardId: string, labelId: string) =>
+    req<{ ok: boolean }>('DELETE', `/cards/${cardId}/labels/${labelId}`),
+
+  createComment: (cardId: string, body: string) =>
+    req<Comment>('POST', `/cards/${cardId}/comments`, { body }),
+  deleteComment: (commentId: string) => req<{ ok: boolean }>('DELETE', `/comments/${commentId}`),
+
+  createChecklist: (cardId: string, title: string) =>
+    req<{ ok: boolean }>('POST', `/cards/${cardId}/checklists`, { title }),
+  deleteChecklist: (checklistId: string) =>
+    req<{ ok: boolean }>('DELETE', `/checklists/${checklistId}`),
+  addChecklistItem: (checklistId: string, content: string) =>
+    req<{ ok: boolean }>('POST', `/checklists/${checklistId}/items`, { content }),
+  updateChecklistItem: (itemId: string, input: { content?: string; isDone?: boolean }) =>
+    req<{ ok: boolean }>('PATCH', `/checklist-items/${itemId}`, input),
+  deleteChecklistItem: (itemId: string) =>
+    req<{ ok: boolean }>('DELETE', `/checklist-items/${itemId}`),
 };

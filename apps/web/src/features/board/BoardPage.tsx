@@ -1,8 +1,9 @@
-import { useBoard, useBoardRealtime } from '@/lib/queries';
+import { useBoard, useBoardRealtime, useMembers } from '@/lib/queries';
 import type { Presence } from '@librekanban/shared';
 import { Link } from '@tanstack/react-router';
+import { Search } from 'lucide-react';
 import { useState } from 'react';
-import { BoardView } from './BoardView';
+import { type BoardFilter, BoardView } from './BoardView';
 import { CardModal } from './CardModal';
 
 function Avatars({ users }: { users: Presence['users'] }) {
@@ -24,8 +25,10 @@ function Avatars({ users }: { users: Presence['users'] }) {
 
 export function BoardPage({ boardId }: { boardId: string }) {
   const { data, isLoading, error } = useBoard(boardId);
+  const { data: members } = useMembers();
   const presence = useBoardRealtime(boardId);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<BoardFilter>({ text: '', labelId: null, assigneeId: null });
 
   if (isLoading)
     return <div className="grid h-full place-items-center text-muted">Loading board…</div>;
@@ -34,24 +37,74 @@ export function BoardPage({ boardId }: { boardId: string }) {
       <div className="grid h-full place-items-center text-muted">Couldn't load this board.</div>
     );
 
-  const selected = selectedId ? (data.cards.find((c) => c.id === selectedId) ?? null) : null;
+  const memberList = members ?? [];
+  const selectCls = 'h-8 rounded-md border border-border bg-surface px-2 text-sm outline-none';
 
   return (
     <div className="flex h-full flex-col">
-      <header className="flex items-center justify-between border-b border-border px-4 py-3">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
         <div className="flex items-center gap-3">
           <Link to="/" className="text-sm text-muted hover:text-text">
             ← Boards
           </Link>
           <h1 className="font-semibold">{data.board.name}</h1>
         </div>
-        <Avatars users={presence} />
+
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 rounded-md border border-border bg-surface px-2">
+            <Search className="size-3.5 text-muted" />
+            <input
+              value={filter.text}
+              onChange={(e) => setFilter((f) => ({ ...f, text: e.target.value }))}
+              placeholder="Search cards"
+              className="h-8 w-36 bg-transparent text-sm outline-none"
+            />
+          </div>
+          <select
+            value={filter.labelId ?? ''}
+            onChange={(e) => setFilter((f) => ({ ...f, labelId: e.target.value || null }))}
+            className={selectCls}
+          >
+            <option value="">All labels</option>
+            {data.labels.map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.name}
+              </option>
+            ))}
+          </select>
+          <select
+            value={filter.assigneeId ?? ''}
+            onChange={(e) => setFilter((f) => ({ ...f, assigneeId: e.target.value || null }))}
+            className={selectCls}
+          >
+            <option value="">Anyone</option>
+            {memberList.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name}
+              </option>
+            ))}
+          </select>
+          <Avatars users={presence} />
+        </div>
       </header>
+
       <div className="min-h-0 flex-1">
-        <BoardView detail={data} onCardClick={(c) => setSelectedId(c.id)} />
+        <BoardView
+          detail={data}
+          members={memberList}
+          filter={filter}
+          onCardClick={(c) => setSelectedId(c.id)}
+        />
       </div>
-      {selected && (
-        <CardModal card={selected} boardId={boardId} onClose={() => setSelectedId(null)} />
+
+      {selectedId && (
+        <CardModal
+          cardId={selectedId}
+          boardId={boardId}
+          labels={data.labels}
+          members={memberList}
+          onClose={() => setSelectedId(null)}
+        />
       )}
     </div>
   );
