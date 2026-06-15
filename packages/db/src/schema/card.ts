@@ -1,13 +1,5 @@
 import type { Priority } from '@librekanban/shared';
-import {
-  boolean,
-  index,
-  integer,
-  pgTable,
-  primaryKey,
-  text,
-  timestamp,
-} from 'drizzle-orm/pg-core';
+import { boolean, index, integer, pgTable, primaryKey, text, timestamp } from 'drizzle-orm/pg-core';
 import { user } from './auth';
 import { boards, columns, labels, swimlanes } from './board';
 

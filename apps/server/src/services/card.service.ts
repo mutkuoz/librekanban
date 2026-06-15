@@ -1,0 +1,254 @@
+import { type Database, boards, cards, columns, newId, swimlanes } from '@librekanban/db';
+import type { Card, CreateCardInput, MoveCardInput, UpdateCardInput } from '@librekanban/shared';
+import { and, asc, desc, eq, gt, sql } from 'drizzle-orm';
+import type { Deps } from '../lib/context';
+import { conflict, notFound } from '../lib/errors';
+import { toCardDTO } from '../lib/serialize';
+import { recordActivity } from './activity';
+import { positionBetween } from './ordering';
+import { assertBoardPermission } from './permissions';
+
+async function loadCard(db: Database, cardId: string) {
+  const rows = await db.select().from(cards).where(eq(cards.id, cardId)).limit(1);
+  if (!rows[0] || rows[0].deletedAt) throw notFound('Card');
+  return rows[0];
+}
+
+async function defaultSwimlaneId(db: Database, boardId: string): Promise<string> {
+  const rows = await db
+    .select({ id: swimlanes.id })
+    .from(swimlanes)
+    .where(and(eq(swimlanes.boardId, boardId), eq(swimlanes.isDefault, true)))
+    .limit(1);
+  if (!rows[0]) throw notFound('Default swimlane');
+  return rows[0].id;
+}
+
+async function positionOf(db: Database, cardId: string | null): Promise<string | null> {
+  if (!cardId) return null;
+  const rows = await db
+    .select({ position: cards.position })
+    .from(cards)
+    .where(eq(cards.id, cardId))
+    .limit(1);
+  return rows[0]?.position ?? null;
+}
+
+/** Position for a card appended to (columnId, swimlaneId), or after `afterCardId`. */
+async function positionForNewCard(
+  db: Database,
+  columnId: string,
+  swimlaneId: string,
+  afterCardId: string | null,
+): Promise<string> {
+  if (afterCardId) {
+    const afterPos = await positionOf(db, afterCardId);
+    const nextRows = afterPos
+      ? await db
+          .select({ position: cards.position })
+          .from(cards)
+          .where(
+            and(
+              eq(cards.columnId, columnId),
+              eq(cards.swimlaneId, swimlaneId),
+              gt(cards.position, afterPos),
+            ),
+          )
+          .orderBy(asc(cards.position))
+          .limit(1)
+      : [];
+    return positionBetween(afterPos, nextRows[0]?.position ?? null);
+  }
+  const last = await db
+    .select({ position: cards.position })
+    .from(cards)
+    .where(and(eq(cards.columnId, columnId), eq(cards.swimlaneId, swimlaneId)))
+    .orderBy(desc(cards.position))
+    .limit(1);
+  return positionBetween(last[0]?.position ?? null, null);
+}
+
+export async function createCard(
+  deps: Deps,
+  userId: string,
+  input: CreateCardInput,
+): Promise<Card> {
+  const colRows = await deps.db
+    .select({ boardId: columns.boardId })
+    .from(columns)
+    .where(eq(columns.id, input.columnId))
+    .limit(1);
+  if (!colRows[0]) throw notFound('Column');
+  const boardId = colRows[0].boardId;
+
+  const { board } = await assertBoardPermission(deps.db, userId, boardId, 'card:create');
+  const swimlaneId = input.swimlaneId ?? (await defaultSwimlaneId(deps.db, boardId));
+  const position = await positionForNewCard(
+    deps.db,
+    input.columnId,
+    swimlaneId,
+    input.afterCardId ?? null,
+  );
+
+  const card = await deps.db.transaction(async (tx) => {
+    const [counter] = await tx
+      .update(boards)
+      .set({ cardCounter: sql`${boards.cardCounter} + 1` })
+      .where(eq(boards.id, boardId))
+      .returning({ number: boards.cardCounter });
+
+    const [created] = await tx
+      .insert(cards)
+      .values({
+        id: newId(),
+        boardId,
+        columnId: input.columnId,
+        swimlaneId,
+        number: counter!.number,
+        title: input.title,
+        description: input.description ?? null,
+        priority: input.priority ?? 'none',
+        dueAt: input.dueAt ? new Date(input.dueAt) : null,
+        startAt: input.startAt ? new Date(input.startAt) : null,
+        position,
+        createdBy: userId,
+      })
+      .returning();
+
+    await recordActivity(tx, {
+      workspaceId: board.workspaceId,
+      boardId,
+      cardId: created!.id,
+      actorId: userId,
+      verb: 'card.created',
+      data: { title: input.title },
+    });
+    return created!;
+  });
+
+  deps.bus.publish({ type: 'card.updated', boardId, entityId: card.id, actorId: userId });
+  return toCardDTO(card);
+}
+
+export async function updateCard(
+  deps: Deps,
+  userId: string,
+  cardId: string,
+  input: UpdateCardInput,
+): Promise<Card> {
+  const existing = await loadCard(deps.db, cardId);
+  const { board } = await assertBoardPermission(deps.db, userId, existing.boardId, 'card:update');
+
+  if (input.version !== undefined && input.version !== existing.version) {
+    throw conflict('This card was changed by someone else. Reload and try again.');
+  }
+
+  const [updated] = await deps.db
+    .update(cards)
+    .set({
+      ...(input.title !== undefined ? { title: input.title } : {}),
+      ...(input.description !== undefined ? { description: input.description } : {}),
+      ...(input.priority !== undefined ? { priority: input.priority } : {}),
+      ...(input.dueAt !== undefined ? { dueAt: input.dueAt ? new Date(input.dueAt) : null } : {}),
+      ...(input.startAt !== undefined
+        ? { startAt: input.startAt ? new Date(input.startAt) : null }
+        : {}),
+      ...(input.isArchived !== undefined ? { isArchived: input.isArchived } : {}),
+      version: existing.version + 1,
+      updatedAt: new Date(),
+    })
+    .where(eq(cards.id, cardId))
+    .returning();
+
+  await recordActivity(deps.db, {
+    workspaceId: board.workspaceId,
+    boardId: existing.boardId,
+    cardId,
+    actorId: userId,
+    verb: 'card.updated',
+  });
+  deps.bus.publish({
+    type: 'card.updated',
+    boardId: existing.boardId,
+    entityId: cardId,
+    version: updated!.version,
+    actorId: userId,
+  });
+  return toCardDTO(updated!);
+}
+
+export async function moveCard(
+  deps: Deps,
+  userId: string,
+  cardId: string,
+  input: MoveCardInput,
+): Promise<Card> {
+  const existing = await loadCard(deps.db, cardId);
+  const { board } = await assertBoardPermission(deps.db, userId, existing.boardId, 'card:move');
+
+  // Validate the target column belongs to the same board, and learn if it's "done".
+  const targetCol = await deps.db
+    .select({ boardId: columns.boardId, isDone: columns.isDoneColumn })
+    .from(columns)
+    .where(eq(columns.id, input.columnId))
+    .limit(1);
+  if (!targetCol[0] || targetCol[0].boardId !== existing.boardId) {
+    throw notFound('Target column');
+  }
+
+  const swimlaneId = input.swimlaneId ?? existing.swimlaneId;
+  const [prevPos, nextPos] = await Promise.all([
+    positionOf(deps.db, input.prevCardId),
+    positionOf(deps.db, input.nextCardId),
+  ]);
+
+  const movingToDone = targetCol[0].isDone;
+  const [updated] = await deps.db
+    .update(cards)
+    .set({
+      columnId: input.columnId,
+      swimlaneId,
+      position: positionBetween(prevPos, nextPos),
+      completedAt: movingToDone ? (existing.completedAt ?? new Date()) : null,
+      version: existing.version + 1,
+      updatedAt: new Date(),
+    })
+    .where(eq(cards.id, cardId))
+    .returning();
+
+  await recordActivity(deps.db, {
+    workspaceId: board.workspaceId,
+    boardId: existing.boardId,
+    cardId,
+    actorId: userId,
+    verb: 'card.moved',
+    data: { toColumnId: input.columnId },
+  });
+  deps.bus.publish({
+    type: 'card.moved',
+    boardId: existing.boardId,
+    entityId: cardId,
+    version: updated!.version,
+    actorId: userId,
+  });
+  return toCardDTO(updated!);
+}
+
+export async function deleteCard(deps: Deps, userId: string, cardId: string): Promise<void> {
+  const existing = await loadCard(deps.db, cardId);
+  const { board } = await assertBoardPermission(deps.db, userId, existing.boardId, 'card:delete');
+  await deps.db.update(cards).set({ deletedAt: new Date() }).where(eq(cards.id, cardId));
+  await recordActivity(deps.db, {
+    workspaceId: board.workspaceId,
+    boardId: existing.boardId,
+    cardId,
+    actorId: userId,
+    verb: 'card.deleted',
+  });
+  deps.bus.publish({
+    type: 'card.updated',
+    boardId: existing.boardId,
+    entityId: cardId,
+    actorId: userId,
+  });
+}

@@ -79,10 +79,7 @@ async function main(): Promise<void> {
       position: sc.pos,
     });
   }
-  await db
-    .update(boards)
-    .set({ cardCounter: n })
-    .where(eq(boards.id, boardId));
+  await db.update(boards).set({ cardCounter: n }).where(eq(boards.id, boardId));
 
   console.log('✓ Seeded demo workspace + board.');
   await pool.end();

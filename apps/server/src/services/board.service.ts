@@ -1,0 +1,236 @@
+import { type Database, boards, cards, columns, labels, newId, swimlanes } from '@librekanban/db';
+import type { Board, CreateBoardInput, UpdateBoardInput } from '@librekanban/shared';
+import { and, asc, desc, eq, isNull } from 'drizzle-orm';
+import type { Deps } from '../lib/context';
+import { forbidden, notFound } from '../lib/errors';
+import { toBoardDTO, toCardDTO, toColumnDTO } from '../lib/serialize';
+import { slugify } from '../lib/slug';
+import { recordActivity } from './activity';
+import { initialPositions, positionBetween } from './ordering';
+import {
+  assertBoardPermission,
+  assertWorkspacePermission,
+  primaryWorkspaceId,
+} from './permissions';
+
+type BoardRow = typeof boards.$inferSelect;
+
+async function nextBoardPosition(db: Database, workspaceId: string): Promise<string> {
+  const last = await db
+    .select({ position: boards.position })
+    .from(boards)
+    .where(eq(boards.workspaceId, workspaceId))
+    .orderBy(desc(boards.position))
+    .limit(1);
+  return positionBetween(last[0]?.position ?? null, null);
+}
+
+interface CreateBoardCore {
+  workspaceId: string;
+  userId: string;
+  name: string;
+  description?: string | null;
+  visibility?: Board['visibility'];
+  color?: string | null;
+  withSampleCards?: boolean;
+}
+
+/**
+ * Create a board together with the structure it needs to be usable: three
+ * starter columns, a default swimlane, and (optionally) a couple of sample
+ * cards. Shared by the API and first-run workspace provisioning.
+ */
+export async function createBoardWithDefaults(
+  db: Database,
+  input: CreateBoardCore,
+): Promise<BoardRow> {
+  const position = await nextBoardPosition(db, input.workspaceId);
+  const boardId = newId();
+  const [colTodo, colDoing, colDone] = initialPositions(3);
+  const swimlaneId = newId();
+  const todoColumnId = newId();
+
+  return db.transaction(async (tx) => {
+    const [board] = await tx
+      .insert(boards)
+      .values({
+        id: boardId,
+        workspaceId: input.workspaceId,
+        name: input.name,
+        slug: `${slugify(input.name)}-${boardId.slice(-6).toLowerCase()}`,
+        description: input.description ?? null,
+        visibility: input.visibility ?? 'workspace',
+        color: input.color ?? null,
+        position,
+        createdBy: input.userId,
+        cardCounter: input.withSampleCards ? 2 : 0,
+      })
+      .returning();
+
+    await tx.insert(swimlanes).values({
+      id: swimlaneId,
+      boardId,
+      name: 'Default',
+      isDefault: true,
+      position: positionBetween(null, null),
+    });
+
+    await tx.insert(columns).values([
+      { id: todoColumnId, boardId, name: 'To Do', position: colTodo! },
+      { id: newId(), boardId, name: 'In Progress', position: colDoing! },
+      { id: newId(), boardId, name: 'Done', position: colDone!, isDoneColumn: true },
+    ]);
+
+    if (input.withSampleCards) {
+      const [p1, p2] = initialPositions(2);
+      await tx.insert(cards).values([
+        {
+          id: newId(),
+          boardId,
+          columnId: todoColumnId,
+          swimlaneId,
+          number: 1,
+          title: 'Welcome! Drag me to another column →',
+          position: p1!,
+          createdBy: input.userId,
+        },
+        {
+          id: newId(),
+          boardId,
+          columnId: todoColumnId,
+          swimlaneId,
+          number: 2,
+          title: 'Click a card to open its details',
+          position: p2!,
+          createdBy: input.userId,
+        },
+      ]);
+    }
+
+    await recordActivity(tx, {
+      workspaceId: input.workspaceId,
+      boardId,
+      actorId: input.userId,
+      verb: 'board.created',
+      data: { name: input.name },
+    });
+
+    return board!;
+  });
+}
+
+export async function listBoards(deps: Deps, userId: string): Promise<Board[]> {
+  const workspaceId = await primaryWorkspaceId(deps.db, userId);
+  if (!workspaceId) return [];
+  const rows = await deps.db
+    .select()
+    .from(boards)
+    .where(and(eq(boards.workspaceId, workspaceId), isNull(boards.deletedAt)))
+    .orderBy(asc(boards.position));
+  return rows.map(toBoardDTO);
+}
+
+export async function createBoard(
+  deps: Deps,
+  userId: string,
+  input: CreateBoardInput,
+): Promise<Board> {
+  const workspaceId = await primaryWorkspaceId(deps.db, userId);
+  if (!workspaceId) throw forbidden('You are not a member of any workspace');
+  await assertWorkspacePermission(deps.db, userId, workspaceId, 'board:create');
+
+  const board = await createBoardWithDefaults(deps.db, {
+    workspaceId,
+    userId,
+    name: input.name,
+    description: input.description ?? null,
+    visibility: input.visibility,
+    color: input.color ?? null,
+  });
+  deps.bus.publish({ type: 'board.updated', boardId: board.id, actorId: userId });
+  return toBoardDTO(board);
+}
+
+export interface BoardDetail {
+  board: Board;
+  columns: ReturnType<typeof toColumnDTO>[];
+  swimlanes: { id: string; name: string; isDefault: boolean; position: string }[];
+  labels: { id: string; name: string; color: string; position: string }[];
+  cards: ReturnType<typeof toCardDTO>[];
+}
+
+export async function getBoardDetail(
+  deps: Deps,
+  userId: string,
+  boardId: string,
+): Promise<BoardDetail> {
+  const { board } = await assertBoardPermission(deps.db, userId, boardId, 'board:read');
+
+  const [columnRows, swimlaneRows, labelRows, cardRows] = await Promise.all([
+    deps.db
+      .select()
+      .from(columns)
+      .where(eq(columns.boardId, boardId))
+      .orderBy(asc(columns.position)),
+    deps.db
+      .select()
+      .from(swimlanes)
+      .where(eq(swimlanes.boardId, boardId))
+      .orderBy(asc(swimlanes.position)),
+    deps.db.select().from(labels).where(eq(labels.boardId, boardId)).orderBy(asc(labels.position)),
+    deps.db
+      .select()
+      .from(cards)
+      .where(and(eq(cards.boardId, boardId), eq(cards.isArchived, false), isNull(cards.deletedAt)))
+      .orderBy(asc(cards.position)),
+  ]);
+
+  return {
+    board: toBoardDTO(board),
+    columns: columnRows.map(toColumnDTO),
+    swimlanes: swimlaneRows.map((s) => ({
+      id: s.id,
+      name: s.name,
+      isDefault: s.isDefault,
+      position: s.position,
+    })),
+    labels: labelRows.map((l) => ({
+      id: l.id,
+      name: l.name,
+      color: l.color,
+      position: l.position,
+    })),
+    cards: cardRows.map(toCardDTO),
+  };
+}
+
+export async function updateBoard(
+  deps: Deps,
+  userId: string,
+  boardId: string,
+  input: UpdateBoardInput,
+): Promise<Board> {
+  await assertBoardPermission(deps.db, userId, boardId, 'board:update');
+  const [updated] = await deps.db
+    .update(boards)
+    .set({
+      ...(input.name !== undefined ? { name: input.name } : {}),
+      ...(input.description !== undefined ? { description: input.description } : {}),
+      ...(input.visibility !== undefined ? { visibility: input.visibility } : {}),
+      ...(input.color !== undefined ? { color: input.color } : {}),
+      ...(input.isArchived !== undefined ? { isArchived: input.isArchived } : {}),
+      updatedAt: new Date(),
+    })
+    .where(eq(boards.id, boardId))
+    .returning();
+  if (!updated) throw notFound('Board');
+
+  await recordActivity(deps.db, {
+    workspaceId: updated.workspaceId,
+    boardId,
+    actorId: userId,
+    verb: 'board.updated',
+  });
+  deps.bus.publish({ type: 'board.updated', boardId, actorId: userId });
+  return toBoardDTO(updated);
+}

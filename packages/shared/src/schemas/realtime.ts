@@ -22,9 +22,7 @@ export type RealtimeEvent = z.infer<typeof realtimeEventSchema>;
 /** Presence list pushed to clients viewing a board. */
 export const presenceSchema = z.object({
   boardId: idSchema,
-  users: z.array(
-    z.object({ id: idSchema, name: z.string(), avatarUrl: z.string().nullable() }),
-  ),
+  users: z.array(z.object({ id: idSchema, name: z.string(), avatarUrl: z.string().nullable() })),
 });
 
 export type Presence = z.infer<typeof presenceSchema>;
