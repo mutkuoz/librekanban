@@ -32,18 +32,18 @@ fan-out across instances, and rate limiting (in-memory or Redis-backed,
 (typing `@Name` already works).
 
 ### M4 — Advanced & customization (in progress)
-**Done:** custom fields — define per-board fields (text / number / date /
-select / checkbox / url / email), set typed values on cards, shown in the card
-modal; managed by admins via the board's field manager.
+**Done:** custom fields (text/number/date/select/checkbox/url/email, typed values
+on cards, admin-managed); **scoped API tokens** (create/revoke in Settings,
+`Authorization: Bearer` auth for the REST API).
 **Remaining:** filter/sort by custom field, List + Calendar views, card
-dependencies, advanced filtering, OIDC/SSO + 2FA/passkeys, scoped API tokens,
-webhooks (HMAC), theming/white-label, i18n, admin panel.
+dependencies, advanced filtering, OIDC/SSO + 2FA/passkeys, webhooks (HMAC),
+theming/white-label, i18n, admin panel.
 
 ### M5 — Polish & ops (in progress)
-**Done:** importers — **Kanboard/CSV** + **Trello JSON** (upload → new board,
-columns + cards).
-**Remaining:** CSV/JSON export, backup/restore CLI, SQLite "lite mode",
-metrics/observability, upgrade tooling, large-board virtualization, a11y +
-keyboard shortcuts, board/card templates, security hardening.
+**Done:** importers — **Kanboard/CSV** + **Trello JSON** (upload → new board);
+**export** — board to JSON or flat-cards CSV (download).
+**Remaining:** backup/restore CLI, SQLite "lite mode", metrics/observability,
+upgrade tooling, large-board virtualization, a11y + keyboard shortcuts,
+board/card templates, security hardening.
 
 See [`docs/architecture.md`](architecture.md) for how it's put together.
