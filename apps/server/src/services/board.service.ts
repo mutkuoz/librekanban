@@ -12,7 +12,13 @@ import {
   newId,
   swimlanes,
 } from '@librekanban/db';
-import type { Board, BoardCard, CreateBoardInput, UpdateBoardInput } from '@librekanban/shared';
+import type {
+  Board,
+  BoardCard,
+  CreateBoardInput,
+  UpdateBoardInput,
+  WorkspaceRole,
+} from '@librekanban/shared';
 import { and, asc, desc, eq, isNull } from 'drizzle-orm';
 import type { Deps } from '../lib/context';
 import { forbidden, notFound } from '../lib/errors';
@@ -166,6 +172,7 @@ export async function createBoard(
 
 export interface BoardDetail {
   board: Board;
+  role: WorkspaceRole;
   columns: ReturnType<typeof toColumnDTO>[];
   swimlanes: { id: string; name: string; isDefault: boolean; position: string }[];
   labels: { id: string; name: string; color: string; position: string }[];
@@ -238,7 +245,7 @@ export async function getBoardDetail(
   userId: string,
   boardId: string,
 ): Promise<BoardDetail> {
-  const { board } = await assertBoardPermission(deps.db, userId, boardId, 'board:read');
+  const { board, role } = await assertBoardPermission(deps.db, userId, boardId, 'board:read');
 
   const [columnRows, swimlaneRows, labelRows, cardRows] = await Promise.all([
     deps.db
@@ -261,6 +268,7 @@ export async function getBoardDetail(
 
   return {
     board: toBoardDTO(board),
+    role,
     columns: columnRows.map(toColumnDTO),
     swimlanes: swimlaneRows.map((s) => ({
       id: s.id,

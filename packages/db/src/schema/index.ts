@@ -9,6 +9,7 @@ export * from './workspace';
 export * from './board';
 export * from './card';
 export * from './activity';
+export * from './notification';
 
 // ── Relations (enable Drizzle's relational query API, e.g. board + columns + cards) ──
 

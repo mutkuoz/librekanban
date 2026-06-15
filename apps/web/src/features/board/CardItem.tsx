@@ -24,16 +24,19 @@ export function CardItem({
   card,
   labels,
   members,
+  canEdit,
   onClick,
 }: {
   card: BoardCard;
   labels: Label[];
   members: WorkspaceMember[];
+  canEdit: boolean;
   onClick: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: card.id,
     data: { type: 'card', columnId: card.columnId },
+    disabled: !canEdit,
   });
 
   const cardLabels = card.labelIds

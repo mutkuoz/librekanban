@@ -1,6 +1,12 @@
 import { Button } from '@/components/ui/button';
 import { api } from '@/lib/api';
-import { useCardActions, useCardDetail, useDeleteCard, useUpdateCard } from '@/lib/queries';
+import {
+  useCardActions,
+  useCardActivity,
+  useCardDetail,
+  useDeleteCard,
+  useUpdateCard,
+} from '@/lib/queries';
 import { cn } from '@/lib/utils';
 import {
   type Checklist,
@@ -10,7 +16,7 @@ import {
   type WorkspaceMember,
 } from '@librekanban/shared';
 import * as Dialog from '@radix-ui/react-dialog';
-import { Check, Loader2, Plus, Trash2, X } from 'lucide-react';
+import { Archive, Check, Loader2, Plus, Trash2, X } from 'lucide-react';
 import { type ReactNode, useEffect, useState } from 'react';
 
 const LABEL_COLORS = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#64748b'];
@@ -35,6 +41,7 @@ export function CardModal({
   onClose: () => void;
 }) {
   const { data: card, isLoading } = useCardDetail(cardId);
+  const { data: activity } = useCardActivity(cardId);
   const update = useUpdateCard(boardId);
   const del = useDeleteCard(boardId);
   const action = useCardActions(boardId, cardId);
@@ -159,8 +166,24 @@ export function CardModal({
                 </div>
               </section>
 
-              {/* Due date + priority */}
+              {/* Dates + priority */}
               <div className="flex flex-wrap gap-6">
+                <section>
+                  <SectionTitle>Start date</SectionTitle>
+                  <input
+                    type="date"
+                    value={card.startAt ? card.startAt.slice(0, 10) : ''}
+                    onChange={(e) =>
+                      update.mutate({
+                        cardId,
+                        input: {
+                          startAt: e.target.value ? new Date(e.target.value).toISOString() : null,
+                        },
+                      })
+                    }
+                    className="rounded-md border border-border bg-bg px-2 py-1.5 text-sm outline-none"
+                  />
+                </section>
                 <section>
                   <SectionTitle>Due date</SectionTitle>
                   <input
@@ -278,16 +301,41 @@ export function CardModal({
                 </div>
               </section>
 
+              {/* Activity */}
+              <section>
+                <SectionTitle>Activity</SectionTitle>
+                <div className="space-y-1.5">
+                  {activity?.map((a) => (
+                    <div key={a.id} className="flex items-baseline gap-2 text-xs text-muted">
+                      <span className="font-medium text-text">{a.actorName ?? 'Someone'}</span>
+                      <span>{verbText(a.verb)}</span>
+                      <span className="ml-auto">{new Date(a.createdAt).toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
               <div className="flex items-center justify-between border-t border-border pt-4">
-                <Button
-                  variant="ghost"
-                  onClick={async () => {
-                    await del.mutateAsync(cardId);
-                    onClose();
-                  }}
-                >
-                  <Trash2 className="size-4" /> Delete card
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    onClick={async () => {
+                      await del.mutateAsync(cardId);
+                      onClose();
+                    }}
+                  >
+                    <Trash2 className="size-4" /> Delete
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={async () => {
+                      await update.mutateAsync({ cardId, input: { isArchived: true } });
+                      onClose();
+                    }}
+                  >
+                    <Archive className="size-4" /> Archive
+                  </Button>
+                </div>
                 <Button variant="secondary" onClick={onClose}>
                   Close
                 </Button>
@@ -298,6 +346,18 @@ export function CardModal({
       </Dialog.Portal>
     </Dialog.Root>
   );
+}
+
+function verbText(verb: string): string {
+  const map: Record<string, string> = {
+    'card.created': 'created this card',
+    'card.updated': 'updated this card',
+    'card.moved': 'moved this card',
+    'card.archived': 'archived this card',
+    'card.deleted': 'deleted this card',
+    'comment.added': 'commented',
+  };
+  return map[verb] ?? verb;
 }
 
 function SectionTitle({ children }: { children: ReactNode }) {

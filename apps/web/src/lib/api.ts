@@ -1,7 +1,9 @@
 import type {
+  Activity,
   Board,
   BoardCard,
   CardDetail,
+  Column,
   Comment,
   CreateBoardInput,
   CreateCardInput,
@@ -10,8 +12,11 @@ import type {
   Label,
   MoveCardInput,
   MoveColumnInput,
+  Notification,
   UpdateCardInput,
+  UpdateColumnInput,
   WorkspaceMember,
+  WorkspaceRole,
 } from '@librekanban/shared';
 
 export class ApiError extends Error {
@@ -50,7 +55,8 @@ export interface MeResponse {
 
 export interface BoardDetail {
   board: Board;
-  columns: import('@librekanban/shared').Column[];
+  role: WorkspaceRole;
+  columns: Column[];
   swimlanes: { id: string; name: string; isDefault: boolean; position: string }[];
   labels: Label[];
   cards: BoardCard[];
@@ -65,9 +71,19 @@ export const api = {
   getBoard: (boardId: string) => req<BoardDetail>('GET', `/boards/${boardId}`),
 
   createColumn: (boardId: string, input: CreateColumnInput) =>
-    req<import('@librekanban/shared').Column>('POST', `/boards/${boardId}/columns`, input),
+    req<Column>('POST', `/boards/${boardId}/columns`, input),
+  updateColumn: (columnId: string, input: UpdateColumnInput) =>
+    req<Column>('PATCH', `/columns/${columnId}`, input),
+  deleteColumn: (columnId: string) => req<{ ok: boolean }>('DELETE', `/columns/${columnId}`),
   moveColumn: (columnId: string, input: MoveColumnInput) =>
-    req<import('@librekanban/shared').Column>('POST', `/columns/${columnId}/move`, input),
+    req<Column>('POST', `/columns/${columnId}/move`, input),
+
+  cardActivity: (cardId: string) => req<Activity[]>('GET', `/cards/${cardId}/activity`),
+
+  listNotifications: () => req<Notification[]>('GET', '/notifications'),
+  unreadCount: () => req<{ count: number }>('GET', '/notifications/unread-count'),
+  markNotificationRead: (id: string) => req<{ ok: boolean }>('POST', `/notifications/${id}/read`),
+  markAllNotificationsRead: () => req<{ ok: boolean }>('POST', '/notifications/read-all'),
 
   createCard: (input: CreateCardInput) => req<BoardCard>('POST', '/cards', input),
   getCard: (cardId: string) => req<CardDetail>('GET', `/cards/${cardId}`),

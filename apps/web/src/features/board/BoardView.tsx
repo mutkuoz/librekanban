@@ -1,5 +1,11 @@
 import type { BoardDetail } from '@/lib/api';
-import { useCreateCard, useMoveCard } from '@/lib/queries';
+import {
+  useCreateCard,
+  useCreateColumn,
+  useDeleteColumn,
+  useMoveCard,
+  useUpdateColumn,
+} from '@/lib/queries';
 import {
   DndContext,
   DragOverlay,
@@ -11,6 +17,7 @@ import {
 import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import type { BoardCard, WorkspaceMember } from '@librekanban/shared';
+import { Plus } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { type BoardList, Column } from './Column';
 
@@ -48,16 +55,23 @@ export function BoardView({
   detail,
   members,
   filter,
+  canEdit,
   onCardClick,
 }: {
   detail: BoardDetail;
   members: WorkspaceMember[];
   filter: BoardFilter;
+  canEdit: boolean;
   onCardClick: (card: BoardCard) => void;
 }) {
   const boardId = detail.board.id;
   const moveCard = useMoveCard(boardId);
   const createCard = useCreateCard(boardId);
+  const createColumn = useCreateColumn(boardId);
+  const updateColumn = useUpdateColumn(boardId);
+  const deleteColumn = useDeleteColumn(boardId);
+  const [addingCol, setAddingCol] = useState(false);
+  const [colName, setColName] = useState('');
 
   const [lists, setLists] = useState<BoardList[]>(() => groupLists(detail, filter));
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -159,10 +173,46 @@ export function BoardView({
             list={list}
             labels={detail.labels}
             members={members}
+            canEdit={canEdit}
             onCardClick={onCardClick}
             onCreateCard={(columnId, title) => createCard.mutate({ columnId, title })}
+            onUpdateColumn={(columnId, input) => updateColumn.mutate({ columnId, input })}
+            onDeleteColumn={(columnId) => deleteColumn.mutate(columnId)}
           />
         ))}
+
+        {canEdit && (
+          <div className="w-72 shrink-0">
+            {addingCol ? (
+              <div className="space-y-2 rounded-xl border border-border bg-surface p-2">
+                <input
+                  // biome-ignore lint/a11y/noAutofocus: focus the new-column field
+                  autoFocus
+                  value={colName}
+                  onChange={(e) => setColName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && colName.trim()) {
+                      createColumn.mutate({ name: colName.trim() });
+                      setColName('');
+                      setAddingCol(false);
+                    }
+                    if (e.key === 'Escape') setAddingCol(false);
+                  }}
+                  placeholder="Column name…"
+                  className="w-full rounded-md border border-border bg-bg p-2 text-sm outline-none focus:ring-2 focus:ring-brand/60"
+                />
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setAddingCol(true)}
+                className="flex w-full items-center gap-1.5 rounded-xl border border-dashed border-border px-3 py-2.5 text-sm text-muted hover:border-brand/60 hover:text-text"
+              >
+                <Plus className="size-4" /> Add column
+              </button>
+            )}
+          </div>
+        )}
       </div>
       <DragOverlay>
         {activeCard && (

@@ -1,5 +1,6 @@
 import { createRoute, z } from '@hono/zod-openapi';
 import {
+  activitySchema,
   cardDetailSchema,
   cardSchema,
   createCardSchema,
@@ -11,6 +12,7 @@ import {
   assignCard,
   createCard,
   deleteCard,
+  getCardActivity,
   getCardDetail,
   moveCard,
   unassignCard,
@@ -35,6 +37,21 @@ cardRoutes.openapi(
   async (c) => {
     const { cardId } = c.req.valid('param');
     return c.json(await getCardDetail(c.get('deps'), currentUser(c).id, cardId), 200);
+  },
+);
+
+cardRoutes.openapi(
+  createRoute({
+    method: 'get',
+    path: '/cards/{cardId}/activity',
+    tags: ['Cards'],
+    summary: 'Get a card activity/history feed',
+    request: { params: cardParam },
+    responses: { 200: jsonResponse(z.array(activitySchema)) },
+  }),
+  async (c) => {
+    const { cardId } = c.req.valid('param');
+    return c.json(await getCardActivity(c.get('deps'), currentUser(c).id, cardId), 200);
   },
 );
 

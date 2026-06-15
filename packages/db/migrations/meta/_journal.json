@@ -8,6 +8,13 @@
       "when": 1781544179232,
       "tag": "0000_lucky_kylun",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1781555803413,
+      "tag": "0001_lean_cargill",
+      "breakpoints": true
     }
   ]
 }

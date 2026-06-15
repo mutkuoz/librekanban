@@ -12,19 +12,20 @@ Auth (email/password + GitHub) and first-run workspace provisioning. Boards,
 columns, and cards CRUD. **Drag-and-drop** (reorder + move across columns) with
 optimistic UI + live updates + presence. Card detail panel.
 
-### M2 — Core card depth (mostly done)
-**Done:** multi-assignees, labels (create + attach), due dates, priority,
-checklists/subtasks, comments, search + label/assignee filtering, and per-card
-relations surfaced on the board (label bars, avatars, due/checklist/comment
-chips). The backend records a full `activities` audit log.
-**Remaining:** WIP-limit enforcement + a column-settings UI, multi-swimlane UI, a
-per-card activity/history panel, archive UI, start dates, attachments, saved
-views, and `@mentions`.
+### M2 — Core card depth ✅
+Multi-assignees, labels (create + attach), start/due dates, priority,
+checklists/subtasks, comments, search + label/assignee filtering, per-card
+relations on the board (label bars, avatars, due/checklist/comment chips),
+add/configure columns (rename, WIP limit, "done", delete), card archive, and a
+per-card activity/history panel.
+*Deferred to later:* multi-swimlane UI, attachments, saved views.
 
-### M3 — Collaboration & realtime
-In-app + email notifications, notification preferences, full RBAC surfacing in the
-UI, board/workspace activity feed, multi-node readiness (Redis event bus + rate-limit
-store).
+### M3 — Collaboration & realtime (in progress)
+**Done:** in-app notifications (bell + feed, generated on assignment and on
+comments to a card's assignees), RBAC surfaced in the UI (viewers are read-only:
+no drag, composers, or column controls), per-card activity feed.
+**Remaining:** email notifications + preferences, `@mentions`, and multi-node
+readiness (Redis event bus + rate-limit store).
 
 ### M4 — Advanced & customization
 Custom fields (define + filter/sort), List + Calendar views, card dependencies,

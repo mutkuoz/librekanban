@@ -8,6 +8,7 @@ import { commentRoutes } from './comments';
 import { labelRoutes } from './labels';
 import { meRoutes } from './me';
 import { memberRoutes } from './members';
+import { notificationRoutes } from './notifications';
 
 /** All authenticated API routes, mounted by the app at `/api`. */
 export function createApiRoutes() {
@@ -15,6 +16,7 @@ export function createApiRoutes() {
   api.use('*', requireAuth);
   api.route('/', meRoutes);
   api.route('/', memberRoutes);
+  api.route('/', notificationRoutes);
   api.route('/', boardRoutes);
   api.route('/', columnRoutes);
   api.route('/', cardRoutes);

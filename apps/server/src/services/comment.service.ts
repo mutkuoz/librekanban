@@ -1,10 +1,11 @@
-import { type Database, cards, comments, newId, user } from '@librekanban/db';
+import { type Database, cardAssignees, cards, comments, newId, user } from '@librekanban/db';
 import type { Comment, CreateCommentInput } from '@librekanban/shared';
 import { can } from '@librekanban/shared';
 import { and, asc, eq, isNull } from 'drizzle-orm';
 import type { Deps } from '../lib/context';
 import { forbidden, notFound } from '../lib/errors';
 import { recordActivity } from './activity';
+import { createNotification } from './notification.service';
 import { assertBoardPermission } from './permissions';
 
 type CommentRow = typeof comments.$inferSelect;
@@ -68,6 +69,22 @@ export async function createComment(
     verb: 'comment.added',
   });
   deps.bus.publish({ type: 'comment.updated', boardId, entityId: cardId, actorId: userId });
+
+  // Notify everyone assigned to the card (except the comment author).
+  const assignees = await deps.db
+    .select({ userId: cardAssignees.userId })
+    .from(cardAssignees)
+    .where(eq(cardAssignees.cardId, cardId));
+  for (const a of assignees) {
+    if (a.userId !== userId) {
+      await createNotification(deps.db, {
+        recipientId: a.userId,
+        workspaceId: board.workspaceId,
+        type: 'comment.added',
+        data: { cardId, boardId },
+      });
+    }
+  }
 
   const authorRows = await deps.db
     .select({ name: user.name, image: user.image })

@@ -1,5 +1,5 @@
 import { useBoard, useBoardRealtime, useMembers } from '@/lib/queries';
-import type { Presence } from '@librekanban/shared';
+import { type Presence, can } from '@librekanban/shared';
 import { Link } from '@tanstack/react-router';
 import { Search } from 'lucide-react';
 import { useState } from 'react';
@@ -38,6 +38,7 @@ export function BoardPage({ boardId }: { boardId: string }) {
     );
 
   const memberList = members ?? [];
+  const canEdit = can(data.role, 'card:create');
   const selectCls = 'h-8 rounded-md border border-border bg-surface px-2 text-sm outline-none';
 
   return (
@@ -93,6 +94,7 @@ export function BoardPage({ boardId }: { boardId: string }) {
           detail={data}
           members={memberList}
           filter={filter}
+          canEdit={canEdit}
           onCardClick={(c) => setSelectedId(c.id)}
         />
       </div>

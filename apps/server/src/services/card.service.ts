@@ -1,5 +1,6 @@
 import {
   type Database,
+  activities,
   boards,
   cardAssignees,
   cardLabels,
@@ -7,8 +8,10 @@ import {
   columns,
   newId,
   swimlanes,
+  user,
 } from '@librekanban/db';
 import type {
+  Activity,
   Card,
   CardDetail,
   CreateCardInput,
@@ -22,6 +25,7 @@ import { toCardDTO } from '../lib/serialize';
 import { recordActivity } from './activity';
 import { listChecklists } from './checklist.service';
 import { listComments } from './comment.service';
+import { createNotification } from './notification.service';
 import { positionBetween } from './ordering';
 import { assertBoardPermission } from './permissions';
 
@@ -277,8 +281,16 @@ export async function assignCard(
   assigneeId: string,
 ): Promise<void> {
   const card = await loadCard(deps.db, cardId);
-  await assertBoardPermission(deps.db, userId, card.boardId, 'card:update');
+  const { board } = await assertBoardPermission(deps.db, userId, card.boardId, 'card:update');
   await deps.db.insert(cardAssignees).values({ cardId, userId: assigneeId }).onConflictDoNothing();
+  if (assigneeId !== userId) {
+    await createNotification(deps.db, {
+      recipientId: assigneeId,
+      workspaceId: board.workspaceId,
+      type: 'card.assigned',
+      data: { cardId, cardTitle: card.title, boardId: card.boardId },
+    });
+  }
   deps.bus.publish({
     type: 'card.updated',
     boardId: card.boardId,
@@ -341,4 +353,34 @@ export async function getCardDetail(
     comments,
     checklists,
   };
+}
+
+/** Activity/history entries for a card, newest first. */
+export async function getCardActivity(
+  deps: Deps,
+  userId: string,
+  cardId: string,
+): Promise<Activity[]> {
+  const card = await loadCard(deps.db, cardId);
+  await assertBoardPermission(deps.db, userId, card.boardId, 'board:read');
+  const rows = await deps.db
+    .select({
+      id: activities.id,
+      verb: activities.verb,
+      data: activities.data,
+      createdAt: activities.createdAt,
+      actorName: user.name,
+    })
+    .from(activities)
+    .leftJoin(user, eq(user.id, activities.actorId))
+    .where(eq(activities.cardId, cardId))
+    .orderBy(desc(activities.createdAt))
+    .limit(50);
+  return rows.map((r) => ({
+    id: r.id,
+    verb: r.verb,
+    actorName: r.actorName ?? null,
+    data: (r.data ?? {}) as Record<string, unknown>,
+    createdAt: r.createdAt.toISOString(),
+  }));
 }

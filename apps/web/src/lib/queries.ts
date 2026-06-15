@@ -94,6 +94,56 @@ export function useCardActions(boardId: string, cardId: string) {
   });
 }
 
+export function useUpdateColumn(boardId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { columnId: string; input: Parameters<typeof api.updateColumn>[1] }) =>
+      api.updateColumn(v.columnId, v.input),
+    onSuccess: () => invalidateBoard(qc, boardId),
+  });
+}
+
+export function useDeleteColumn(boardId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.deleteColumn,
+    onSuccess: () => invalidateBoard(qc, boardId),
+  });
+}
+
+export function useCardActivity(cardId: string | null) {
+  return useQuery({
+    queryKey: ['card-activity', cardId],
+    queryFn: () => api.cardActivity(cardId as string),
+    enabled: cardId != null,
+  });
+}
+
+export function useNotifications() {
+  return useQuery({ queryKey: ['notifications'], queryFn: api.listNotifications });
+}
+
+export function useUnreadCount() {
+  return useQuery({
+    queryKey: ['unreadCount'],
+    queryFn: api.unreadCount,
+    refetchInterval: 20_000,
+  });
+}
+
+export function useNotificationActions() {
+  const qc = useQueryClient();
+  const invalidate = () =>
+    Promise.all([
+      qc.invalidateQueries({ queryKey: ['notifications'] }),
+      qc.invalidateQueries({ queryKey: ['unreadCount'] }),
+    ]);
+  return {
+    markRead: useMutation({ mutationFn: api.markNotificationRead, onSuccess: invalidate }),
+    markAll: useMutation({ mutationFn: api.markAllNotificationsRead, onSuccess: invalidate }),
+  };
+}
+
 /** Subscribe to live board updates; returns the current presence list. */
 export function useBoardRealtime(boardId: string): Presence['users'] {
   const qc = useQueryClient();
