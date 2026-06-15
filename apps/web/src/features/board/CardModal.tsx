@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { api } from '@/lib/api';
+import { api, attachmentUrl } from '@/lib/api';
 import {
   useCardActions,
   useCardActivity,
@@ -16,7 +16,7 @@ import {
   type WorkspaceMember,
 } from '@librekanban/shared';
 import * as Dialog from '@radix-ui/react-dialog';
-import { Archive, Check, Loader2, Plus, Trash2, X } from 'lucide-react';
+import { Archive, Check, Loader2, Paperclip, Plus, Trash2, X } from 'lucide-react';
 import { type ReactNode, useEffect, useState } from 'react';
 
 const LABEL_COLORS = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#64748b'];
@@ -254,6 +254,53 @@ export function CardModal({
                 />
               </section>
 
+              {/* Attachments */}
+              <section className="space-y-2">
+                <SectionTitle>Attachments</SectionTitle>
+                {card.attachments.map((a) => (
+                  <div key={a.id} className="group flex items-center gap-2 text-sm">
+                    {a.contentType.startsWith('image/') ? (
+                      <a href={attachmentUrl(a.id)} target="_blank" rel="noreferrer">
+                        <img
+                          src={attachmentUrl(a.id)}
+                          alt={a.filename}
+                          className="size-10 rounded border border-border object-cover"
+                        />
+                      </a>
+                    ) : (
+                      <Paperclip className="size-4 shrink-0 text-muted" />
+                    )}
+                    <a
+                      href={attachmentUrl(a.id)}
+                      download={a.filename}
+                      className="flex-1 truncate hover:underline"
+                    >
+                      {a.filename}
+                    </a>
+                    <span className="shrink-0 text-xs text-muted">{formatBytes(a.sizeBytes)}</span>
+                    <button
+                      type="button"
+                      onClick={() => run(() => api.deleteAttachment(a.id))}
+                      className="opacity-0 transition-opacity group-hover:opacity-100"
+                    >
+                      <Trash2 className="size-3.5 text-muted hover:text-red-400" />
+                    </button>
+                  </div>
+                ))}
+                <label className="inline-flex cursor-pointer items-center gap-1.5 text-sm text-muted hover:text-text">
+                  <Paperclip className="size-4" /> Add attachment
+                  <input
+                    type="file"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) run(() => api.uploadAttachment(cardId, f));
+                      e.target.value = '';
+                    }}
+                  />
+                </label>
+              </section>
+
               {/* Comments */}
               <section className="space-y-3">
                 <SectionTitle>Comments</SectionTitle>
@@ -346,6 +393,12 @@ export function CardModal({
       </Dialog.Portal>
     </Dialog.Root>
   );
+}
+
+function formatBytes(n: number): string {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function verbText(verb: string): string {

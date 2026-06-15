@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { BoardCard, Label, Priority, WorkspaceMember } from '@librekanban/shared';
-import { CalendarClock, CheckSquare, MessageSquare } from 'lucide-react';
+import { CalendarClock, CheckSquare, MessageSquare, Paperclip } from 'lucide-react';
 
 const priorityDot: Record<Priority, string> = {
   none: '',
@@ -107,6 +107,12 @@ export function CardItem({
             <span className="flex items-center gap-1">
               <MessageSquare className="size-3" />
               {card.commentCount}
+            </span>
+          )}
+          {card.attachmentCount > 0 && (
+            <span className="flex items-center gap-1">
+              <Paperclip className="size-3" />
+              {card.attachmentCount}
             </span>
           )}
         </div>

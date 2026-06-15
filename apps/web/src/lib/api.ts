@@ -1,5 +1,6 @@
 import type {
   Activity,
+  Attachment,
   Board,
   BoardCard,
   CardDetail,
@@ -18,6 +19,9 @@ import type {
   WorkspaceMember,
   WorkspaceRole,
 } from '@librekanban/shared';
+
+/** URL for downloading/previewing an attachment (cookie-authed, same origin). */
+export const attachmentUrl = (id: string) => `/api/attachments/${id}`;
 
 export class ApiError extends Error {
   constructor(
@@ -84,6 +88,25 @@ export const api = {
   unreadCount: () => req<{ count: number }>('GET', '/notifications/unread-count'),
   markNotificationRead: (id: string) => req<{ ok: boolean }>('POST', `/notifications/${id}/read`),
   markAllNotificationsRead: () => req<{ ok: boolean }>('POST', '/notifications/read-all'),
+  notificationPreferences: () => req<{ emailEnabled: boolean }>('GET', '/notification-preferences'),
+  setNotificationPreferences: (emailEnabled: boolean) =>
+    req<{ emailEnabled: boolean }>('PUT', '/notification-preferences', { emailEnabled }),
+
+  uploadAttachment: async (cardId: string, file: File): Promise<Attachment> => {
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await fetch(`/api/cards/${cardId}/attachments`, {
+      method: 'POST',
+      credentials: 'include',
+      body: fd,
+    });
+    if (!res.ok) {
+      const data = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
+      throw new ApiError(res.status, 'upload_failed', data?.error?.message ?? 'Upload failed');
+    }
+    return res.json() as Promise<Attachment>;
+  },
+  deleteAttachment: (id: string) => req<{ ok: boolean }>('DELETE', `/attachments/${id}`),
 
   createCard: (input: CreateCardInput) => req<BoardCard>('POST', '/cards', input),
   getCard: (cardId: string) => req<CardDetail>('GET', `/cards/${cardId}`),

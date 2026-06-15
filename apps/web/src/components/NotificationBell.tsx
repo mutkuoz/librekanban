@@ -1,4 +1,10 @@
-import { useNotificationActions, useNotifications, useUnreadCount } from '@/lib/queries';
+import {
+  useNotificationActions,
+  useNotificationPreferences,
+  useNotifications,
+  useSetNotificationPreferences,
+  useUnreadCount,
+} from '@/lib/queries';
 import { cn } from '@/lib/utils';
 import type { Notification } from '@librekanban/shared';
 import { useRouter } from '@tanstack/react-router';
@@ -8,6 +14,7 @@ import { useState } from 'react';
 function describe(n: Notification): string {
   const title = typeof n.data.cardTitle === 'string' ? `"${n.data.cardTitle}"` : 'a card';
   if (n.type === 'card.assigned') return `You were assigned to ${title}`;
+  if (n.type === 'comment.mention') return 'You were mentioned in a comment';
   if (n.type === 'comment.added') return 'New comment on a card you follow';
   return n.type;
 }
@@ -25,6 +32,8 @@ export function NotificationBell() {
   const { data: count } = useUnreadCount();
   const { data: notifications } = useNotifications();
   const { markRead, markAll } = useNotificationActions();
+  const { data: prefs } = useNotificationPreferences();
+  const setPrefs = useSetNotificationPreferences();
   const router = useRouter();
   const unread = count?.count ?? 0;
 
@@ -96,6 +105,14 @@ export function NotificationBell() {
                 ))
               )}
             </div>
+            <label className="flex cursor-pointer items-center justify-between gap-2 border-t border-border px-3 py-2.5 text-sm text-muted">
+              Email me about activity
+              <input
+                type="checkbox"
+                checked={prefs?.emailEnabled ?? true}
+                onChange={(e) => setPrefs.mutate(e.target.checked)}
+              />
+            </label>
           </div>
         </>
       )}

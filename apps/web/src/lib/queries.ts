@@ -131,6 +131,18 @@ export function useUnreadCount() {
   });
 }
 
+export function useNotificationPreferences() {
+  return useQuery({ queryKey: ['prefs'], queryFn: api.notificationPreferences });
+}
+
+export function useSetNotificationPreferences() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (emailEnabled: boolean) => api.setNotificationPreferences(emailEnabled),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['prefs'] }),
+  });
+}
+
 export function useNotificationActions() {
   const qc = useQueryClient();
   const invalidate = () =>
