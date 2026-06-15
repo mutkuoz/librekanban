@@ -31,10 +31,13 @@ fan-out across instances, and rate limiting (in-memory or Redis-backed,
 *Deferred to later:* daily-digest emails and a `@mention` autocomplete UI
 (typing `@Name` already works).
 
-### M4 — Advanced & customization
-Custom fields (define + filter/sort), List + Calendar views, card dependencies,
-advanced filtering, OIDC/SSO + 2FA/passkeys, scoped API tokens, webhooks (HMAC),
-theming/white-label, i18n, admin panel.
+### M4 — Advanced & customization (in progress)
+**Done:** custom fields — define per-board fields (text / number / date /
+select / checkbox / url / email), set typed values on cards, shown in the card
+modal; managed by admins via the board's field manager.
+**Remaining:** filter/sort by custom field, List + Calendar views, card
+dependencies, advanced filtering, OIDC/SSO + 2FA/passkeys, scoped API tokens,
+webhooks (HMAC), theming/white-label, i18n, admin panel.
 
 ### M5 — Polish & ops
 Importers (Kanboard, Trello, CSV/JSON) + export, backup/restore CLI, **SQLite
