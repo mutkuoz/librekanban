@@ -16,16 +16,20 @@ optimistic UI + live updates + presence. Card detail panel.
 Multi-assignees, labels (create + attach), start/due dates, priority,
 checklists/subtasks, comments, search + label/assignee filtering, per-card
 relations on the board (label bars, avatars, due/checklist/comment chips),
-add/configure columns (rename, WIP limit, "done", delete), card archive, and a
-per-card activity/history panel.
-*Deferred to later:* multi-swimlane UI, attachments, saved views.
+add/configure columns (rename, WIP limit, "done", delete), card archive, a
+per-card activity/history panel, and **file attachments** (upload/download/
+delete, image previews, count chip; local-disk or S3).
+*Deferred to later:* multi-swimlane UI, saved views.
 
-### M3 — Collaboration & realtime (in progress)
-**Done:** in-app notifications (bell + feed, generated on assignment and on
-comments to a card's assignees), RBAC surfaced in the UI (viewers are read-only:
-no drag, composers, or column controls), per-card activity feed.
-**Remaining:** email notifications + preferences, `@mentions`, and multi-node
-readiness (Redis event bus + rate-limit store).
+### M3 — Collaboration & realtime ✅
+In-app notifications (bell + feed, generated on assignment, comments, and
+`@mentions`) with **email** delivery (instant, SMTP-optional) and a per-user
+email preference. RBAC surfaced in the UI (viewers are read-only). Per-card
+activity feed. **Multi-node ready:** Redis event bus (`REDIS_URL`) for realtime
+fan-out across instances, and rate limiting (in-memory or Redis-backed,
+`RateLimit-*` headers).
+*Deferred to later:* daily-digest emails and a `@mention` autocomplete UI
+(typing `@Name` already works).
 
 ### M4 — Advanced & customization
 Custom fields (define + filter/sort), List + Calendar views, card dependencies,
