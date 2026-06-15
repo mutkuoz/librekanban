@@ -1,17 +1,74 @@
 import { createRoute, z } from '@hono/zod-openapi';
 import {
+  cardDetailSchema,
   cardSchema,
   createCardSchema,
   moveCardSchema,
   updateCardSchema,
 } from '@librekanban/shared';
 import { currentUser } from '../middleware/auth';
-import { createCard, deleteCard, moveCard, updateCard } from '../services/card.service';
+import {
+  assignCard,
+  createCard,
+  deleteCard,
+  getCardDetail,
+  moveCard,
+  unassignCard,
+  updateCard,
+} from '../services/card.service';
 import { jsonBody, jsonResponse, makeRouter } from './_helpers';
 
 const cardParam = z.object({ cardId: z.string() });
+const assigneeParam = z.object({ cardId: z.string(), userId: z.string() });
 
 export const cardRoutes = makeRouter();
+
+cardRoutes.openapi(
+  createRoute({
+    method: 'get',
+    path: '/cards/{cardId}',
+    tags: ['Cards'],
+    summary: 'Get a card with comments, checklists and relations',
+    request: { params: cardParam },
+    responses: { 200: jsonResponse(cardDetailSchema) },
+  }),
+  async (c) => {
+    const { cardId } = c.req.valid('param');
+    return c.json(await getCardDetail(c.get('deps'), currentUser(c).id, cardId), 200);
+  },
+);
+
+cardRoutes.openapi(
+  createRoute({
+    method: 'put',
+    path: '/cards/{cardId}/assignees/{userId}',
+    tags: ['Cards'],
+    summary: 'Assign a member to a card',
+    request: { params: assigneeParam },
+    responses: { 200: jsonResponse(z.object({ ok: z.boolean() })) },
+  }),
+  async (c) => {
+    const { cardId, userId } = c.req.valid('param');
+    await assignCard(c.get('deps'), currentUser(c).id, cardId, userId);
+    return c.json({ ok: true }, 200);
+  },
+);
+
+cardRoutes.openapi(
+  createRoute({
+    method: 'delete',
+    path: '/cards/{cardId}/assignees/{userId}',
+    tags: ['Cards'],
+    summary: 'Unassign a member from a card',
+    request: { params: assigneeParam },
+    responses: { 200: jsonResponse(z.object({ ok: z.boolean() })) },
+  }),
+  async (c) => {
+    const { cardId, userId } = c.req.valid('param');
+    await unassignCard(c.get('deps'), currentUser(c).id, cardId, userId);
+    return c.json({ ok: true }, 200);
+  },
+);
 
 cardRoutes.openapi(
   createRoute({

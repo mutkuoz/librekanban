@@ -1,5 +1,11 @@
-import { type Database, newId, workspaceMembers, workspaces } from '@librekanban/db';
-import type { WorkspaceRole } from '@librekanban/shared';
+import {
+  type Database,
+  newId,
+  user as userTable,
+  workspaceMembers,
+  workspaces,
+} from '@librekanban/db';
+import type { WorkspaceMember, WorkspaceRole } from '@librekanban/shared';
 import { eq } from 'drizzle-orm';
 import type { SessionUser } from '../lib/context';
 import { slugify } from '../lib/slug';
@@ -56,4 +62,22 @@ export async function listUserWorkspaces(
     .innerJoin(workspaces, eq(workspaces.id, workspaceMembers.workspaceId))
     .where(eq(workspaceMembers.userId, userId));
   return rows;
+}
+
+/** Members of a workspace, with profile info — for assignee pickers and avatars. */
+export async function listWorkspaceMembers(
+  db: Database,
+  workspaceId: string,
+): Promise<WorkspaceMember[]> {
+  return db
+    .select({
+      id: userTable.id,
+      name: userTable.name,
+      email: userTable.email,
+      image: userTable.image,
+      role: workspaceMembers.role,
+    })
+    .from(workspaceMembers)
+    .innerJoin(userTable, eq(userTable.id, workspaceMembers.userId))
+    .where(eq(workspaceMembers.workspaceId, workspaceId));
 }

@@ -1,5 +1,18 @@
-import { type Database, boards, cards, columns, labels, newId, swimlanes } from '@librekanban/db';
-import type { Board, CreateBoardInput, UpdateBoardInput } from '@librekanban/shared';
+import {
+  type Database,
+  boards,
+  cardAssignees,
+  cardLabels,
+  cards,
+  checklistItems,
+  checklists,
+  columns,
+  comments,
+  labels,
+  newId,
+  swimlanes,
+} from '@librekanban/db';
+import type { Board, BoardCard, CreateBoardInput, UpdateBoardInput } from '@librekanban/shared';
 import { and, asc, desc, eq, isNull } from 'drizzle-orm';
 import type { Deps } from '../lib/context';
 import { forbidden, notFound } from '../lib/errors';
@@ -156,7 +169,68 @@ export interface BoardDetail {
   columns: ReturnType<typeof toColumnDTO>[];
   swimlanes: { id: string; name: string; isDefault: boolean; position: string }[];
   labels: { id: string; name: string; color: string; position: string }[];
-  cards: ReturnType<typeof toCardDTO>[];
+  cards: BoardCard[];
+}
+
+/** Attach per-card relations (labels, assignees, checklist progress, comment count). */
+async function enrichBoardCards(
+  db: Database,
+  boardId: string,
+  cardRows: (typeof cards.$inferSelect)[],
+): Promise<BoardCard[]> {
+  if (cardRows.length === 0) return [];
+
+  const [labelRows, assigneeRows, checklistRows, commentRows] = await Promise.all([
+    db
+      .select({ cardId: cardLabels.cardId, labelId: cardLabels.labelId })
+      .from(cardLabels)
+      .innerJoin(cards, eq(cards.id, cardLabels.cardId))
+      .where(eq(cards.boardId, boardId)),
+    db
+      .select({ cardId: cardAssignees.cardId, userId: cardAssignees.userId })
+      .from(cardAssignees)
+      .innerJoin(cards, eq(cards.id, cardAssignees.cardId))
+      .where(eq(cards.boardId, boardId)),
+    db
+      .select({ cardId: checklists.cardId, isDone: checklistItems.isDone })
+      .from(checklistItems)
+      .innerJoin(checklists, eq(checklists.id, checklistItems.checklistId))
+      .innerJoin(cards, eq(cards.id, checklists.cardId))
+      .where(eq(cards.boardId, boardId)),
+    db
+      .select({ cardId: comments.cardId })
+      .from(comments)
+      .innerJoin(cards, eq(cards.id, comments.cardId))
+      .where(and(eq(cards.boardId, boardId), isNull(comments.deletedAt))),
+  ]);
+
+  const push = (map: Map<string, string[]>, key: string, value: string) => {
+    const arr = map.get(key);
+    if (arr) arr.push(value);
+    else map.set(key, [value]);
+  };
+  const labelIds = new Map<string, string[]>();
+  for (const r of labelRows) push(labelIds, r.cardId, r.labelId);
+  const assigneeIds = new Map<string, string[]>();
+  for (const r of assigneeRows) push(assigneeIds, r.cardId, r.userId);
+  const checks = new Map<string, { done: number; total: number }>();
+  for (const r of checklistRows) {
+    const c = checks.get(r.cardId) ?? { done: 0, total: 0 };
+    c.total += 1;
+    if (r.isDone) c.done += 1;
+    checks.set(r.cardId, c);
+  }
+  const commentCount = new Map<string, number>();
+  for (const r of commentRows) commentCount.set(r.cardId, (commentCount.get(r.cardId) ?? 0) + 1);
+
+  return cardRows.map((c) => ({
+    ...toCardDTO(c),
+    labelIds: labelIds.get(c.id) ?? [],
+    assigneeIds: assigneeIds.get(c.id) ?? [],
+    checklistDone: checks.get(c.id)?.done ?? 0,
+    checklistTotal: checks.get(c.id)?.total ?? 0,
+    commentCount: commentCount.get(c.id) ?? 0,
+  }));
 }
 
 export async function getBoardDetail(
@@ -200,7 +274,7 @@ export async function getBoardDetail(
       color: l.color,
       position: l.position,
     })),
-    cards: cardRows.map(toCardDTO),
+    cards: await enrichBoardCards(deps.db, boardId, cardRows),
   };
 }
 

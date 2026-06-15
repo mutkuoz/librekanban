@@ -59,7 +59,17 @@ export const cardSchema = z.object({
   updatedAt: z.string(),
 });
 
+/** A card as rendered on the board: base fields plus lightweight relations. */
+export const boardCardSchema = cardSchema.extend({
+  labelIds: z.array(idSchema),
+  assigneeIds: z.array(idSchema),
+  checklistDone: z.number().int(),
+  checklistTotal: z.number().int(),
+  commentCount: z.number().int(),
+});
+
 export type CreateCardInput = z.infer<typeof createCardSchema>;
 export type UpdateCardInput = z.infer<typeof updateCardSchema>;
 export type MoveCardInput = z.infer<typeof moveCardSchema>;
 export type Card = z.infer<typeof cardSchema>;
+export type BoardCard = z.infer<typeof boardCardSchema>;

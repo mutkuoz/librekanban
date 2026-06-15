@@ -1,10 +1,27 @@
-import { type Database, boards, cards, columns, newId, swimlanes } from '@librekanban/db';
-import type { Card, CreateCardInput, MoveCardInput, UpdateCardInput } from '@librekanban/shared';
+import {
+  type Database,
+  boards,
+  cardAssignees,
+  cardLabels,
+  cards,
+  columns,
+  newId,
+  swimlanes,
+} from '@librekanban/db';
+import type {
+  Card,
+  CardDetail,
+  CreateCardInput,
+  MoveCardInput,
+  UpdateCardInput,
+} from '@librekanban/shared';
 import { and, asc, desc, eq, gt, sql } from 'drizzle-orm';
 import type { Deps } from '../lib/context';
 import { conflict, notFound } from '../lib/errors';
 import { toCardDTO } from '../lib/serialize';
 import { recordActivity } from './activity';
+import { listChecklists } from './checklist.service';
+import { listComments } from './comment.service';
 import { positionBetween } from './ordering';
 import { assertBoardPermission } from './permissions';
 
@@ -251,4 +268,77 @@ export async function deleteCard(deps: Deps, userId: string, cardId: string): Pr
     entityId: cardId,
     actorId: userId,
   });
+}
+
+export async function assignCard(
+  deps: Deps,
+  userId: string,
+  cardId: string,
+  assigneeId: string,
+): Promise<void> {
+  const card = await loadCard(deps.db, cardId);
+  await assertBoardPermission(deps.db, userId, card.boardId, 'card:update');
+  await deps.db.insert(cardAssignees).values({ cardId, userId: assigneeId }).onConflictDoNothing();
+  deps.bus.publish({
+    type: 'card.updated',
+    boardId: card.boardId,
+    entityId: cardId,
+    actorId: userId,
+  });
+}
+
+export async function unassignCard(
+  deps: Deps,
+  userId: string,
+  cardId: string,
+  assigneeId: string,
+): Promise<void> {
+  const card = await loadCard(deps.db, cardId);
+  await assertBoardPermission(deps.db, userId, card.boardId, 'card:update');
+  await deps.db
+    .delete(cardAssignees)
+    .where(and(eq(cardAssignees.cardId, cardId), eq(cardAssignees.userId, assigneeId)));
+  deps.bus.publish({
+    type: 'card.updated',
+    boardId: card.boardId,
+    entityId: cardId,
+    actorId: userId,
+  });
+}
+
+/** Full card with relations, comments and checklists — for the detail panel. */
+export async function getCardDetail(
+  deps: Deps,
+  userId: string,
+  cardId: string,
+): Promise<CardDetail> {
+  const card = await loadCard(deps.db, cardId);
+  await assertBoardPermission(deps.db, userId, card.boardId, 'board:read');
+
+  const [labelRows, assigneeRows, checklists, comments] = await Promise.all([
+    deps.db
+      .select({ labelId: cardLabels.labelId })
+      .from(cardLabels)
+      .where(eq(cardLabels.cardId, cardId)),
+    deps.db
+      .select({ userId: cardAssignees.userId })
+      .from(cardAssignees)
+      .where(eq(cardAssignees.cardId, cardId)),
+    listChecklists(deps.db, cardId),
+    listComments(deps, userId, cardId),
+  ]);
+
+  const checklistTotal = checklists.reduce((n, c) => n + c.items.length, 0);
+  const checklistDone = checklists.reduce((n, c) => n + c.items.filter((i) => i.isDone).length, 0);
+
+  return {
+    ...toCardDTO(card),
+    labelIds: labelRows.map((r) => r.labelId),
+    assigneeIds: assigneeRows.map((r) => r.userId),
+    checklistDone,
+    checklistTotal,
+    commentCount: comments.length,
+    comments,
+    checklists,
+  };
 }
