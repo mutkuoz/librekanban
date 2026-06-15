@@ -50,6 +50,7 @@ export function CardItem({
   return (
     <button
       type="button"
+      data-testid="card"
       ref={setNodeRef}
       style={{ transform: CSS.Translate.toString(transform), transition }}
       {...attributes}

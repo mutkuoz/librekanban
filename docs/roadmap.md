@@ -41,7 +41,9 @@ theming/white-label, i18n, admin panel.
 
 ### M5 — Polish & ops (in progress)
 **Done:** importers — **Kanboard/CSV** + **Trello JSON** (upload → new board);
-**export** — board to JSON or flat-cards CSV (download).
+**export** — board to JSON or flat-cards CSV (download); **Playwright E2E**
+covering sign-up → seeded board → add card → **drag-and-drop** → card modal /
+labels, running in CI against the single-container build.
 **Remaining:** backup/restore CLI, SQLite "lite mode", metrics/observability,
 upgrade tooling, large-board virtualization, a11y + keyboard shortcuts,
 board/card templates, security hardening.

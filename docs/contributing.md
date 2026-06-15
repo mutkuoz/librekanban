@@ -19,6 +19,14 @@ pnpm typecheck   # tsc across the workspace
 pnpm test        # Vitest unit tests
 ```
 
+End-to-end (Playwright, drives a real browser against the single-container build;
+needs Postgres running):
+
+```bash
+pnpm --filter @librekanban/web exec playwright install chromium   # once
+pnpm --filter @librekanban/web test:e2e
+```
+
 ## Conventions
 
 - **Where code goes**: HTTP shape in `apps/server/src/routes`, business logic in

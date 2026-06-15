@@ -52,7 +52,11 @@ export function Column({
   };
 
   return (
-    <div className="flex h-full w-72 shrink-0 flex-col rounded-xl border border-border bg-surface">
+    <div
+      data-testid="board-column"
+      data-column-name={list.column.name}
+      className="flex h-full w-72 shrink-0 flex-col rounded-xl border border-border bg-surface"
+    >
       <header className="flex items-center justify-between px-3 py-2.5">
         <div className="flex min-w-0 items-center gap-2">
           <span className="truncate text-sm font-semibold">{list.column.name}</span>
