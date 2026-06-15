@@ -1,5 +1,14 @@
 import type { ImportBoard } from './types';
 
+/** Serialize rows to CSV, quoting fields that contain commas/quotes/newlines. */
+export function toCsv(rows: (string | number | null | undefined)[][]): string {
+  const esc = (v: string | number | null | undefined): string => {
+    const s = v == null ? '' : String(v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  return rows.map((r) => r.map(esc).join(',')).join('\n');
+}
+
 /** Parse CSV text into rows of fields (handles quotes, escaped quotes, newlines). */
 export function parseCsvRows(text: string): string[][] {
   const s = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');

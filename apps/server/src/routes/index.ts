@@ -7,11 +7,13 @@ import { checklistRoutes } from './checklists';
 import { columnRoutes } from './columns';
 import { commentRoutes } from './comments';
 import { customFieldRoutes } from './custom-fields';
+import { exportRoutes } from './export';
 import { importRoutes } from './import';
 import { labelRoutes } from './labels';
 import { meRoutes } from './me';
 import { memberRoutes } from './members';
 import { notificationRoutes } from './notifications';
+import { tokenRoutes } from './tokens';
 
 /** All authenticated API routes, mounted by the app at `/api`. */
 export function createApiRoutes() {
@@ -29,5 +31,7 @@ export function createApiRoutes() {
   api.route('/', attachmentRoutes);
   api.route('/', customFieldRoutes);
   api.route('/', importRoutes);
+  api.route('/', exportRoutes);
+  api.route('/', tokenRoutes);
   return api;
 }

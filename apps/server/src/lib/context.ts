@@ -1,4 +1,4 @@
-import type { Auth, AuthSession } from '@librekanban/auth';
+import type { Auth } from '@librekanban/auth';
 import type { Database } from '@librekanban/db';
 import type { StorageBackend } from '@librekanban/storage';
 import type { Logger } from 'pino';
@@ -19,8 +19,13 @@ export interface Deps {
   logger: Logger;
 }
 
-/** The authenticated user shape, derived from better-auth's session. */
-export type SessionUser = NonNullable<AuthSession>['user'];
+/** The authenticated user — from a session cookie or an API token. */
+export interface SessionUser {
+  id: string;
+  name: string;
+  email: string;
+  image: string | null;
+}
 
 /** Hono environment: request-scoped variables available via `c.get(...)`. */
 export type AppEnv = {

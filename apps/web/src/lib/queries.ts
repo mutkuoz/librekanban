@@ -144,6 +144,23 @@ export function useUnreadCount() {
   });
 }
 
+export function useTokens() {
+  return useQuery({ queryKey: ['tokens'], queryFn: api.listTokens });
+}
+
+export function useTokenActions() {
+  const qc = useQueryClient();
+  const invalidate = () => qc.invalidateQueries({ queryKey: ['tokens'] });
+  return {
+    create: useMutation({
+      mutationFn: (v: { name: string; expiresInDays?: number }) =>
+        api.createToken(v.name, v.expiresInDays),
+      onSuccess: invalidate,
+    }),
+    revoke: useMutation({ mutationFn: (id: string) => api.revokeToken(id), onSuccess: invalidate }),
+  };
+}
+
 export function useNotificationPreferences() {
   return useQuery({ queryKey: ['prefs'], queryFn: api.notificationPreferences });
 }

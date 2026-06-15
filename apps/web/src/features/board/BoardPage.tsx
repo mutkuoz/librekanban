@@ -1,7 +1,7 @@
 import { useBoard, useBoardRealtime, useMembers } from '@/lib/queries';
 import { type Presence, can } from '@librekanban/shared';
 import { Link } from '@tanstack/react-router';
-import { Search, SlidersHorizontal } from 'lucide-react';
+import { Download, Search, SlidersHorizontal } from 'lucide-react';
 import { useState } from 'react';
 import { type BoardFilter, BoardView } from './BoardView';
 import { CardModal } from './CardModal';
@@ -30,6 +30,7 @@ export function BoardPage({ boardId }: { boardId: string }) {
   const presence = useBoardRealtime(boardId);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [fieldsOpen, setFieldsOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
   const [filter, setFilter] = useState<BoardFilter>({ text: '', labelId: null, assigneeId: null });
 
   if (isLoading)
@@ -88,6 +89,42 @@ export function BoardPage({ boardId }: { boardId: string }) {
               </option>
             ))}
           </select>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setExportOpen((o) => !o)}
+              title="Export"
+              className="grid size-8 place-items-center rounded-md border border-border bg-surface text-muted hover:text-text"
+            >
+              <Download className="size-4" />
+            </button>
+            {exportOpen && (
+              <>
+                <button
+                  type="button"
+                  aria-label="Close export menu"
+                  className="fixed inset-0 z-10 cursor-default"
+                  onClick={() => setExportOpen(false)}
+                />
+                <div className="absolute right-0 z-20 mt-2 w-40 rounded-md border border-border bg-surface p-1 shadow-xl">
+                  <a
+                    href={`/api/boards/${boardId}/export?format=json`}
+                    onClick={() => setExportOpen(false)}
+                    className="block rounded px-2 py-1.5 text-sm hover:bg-surface-2"
+                  >
+                    Export JSON
+                  </a>
+                  <a
+                    href={`/api/boards/${boardId}/export?format=csv`}
+                    onClick={() => setExportOpen(false)}
+                    className="block rounded px-2 py-1.5 text-sm hover:bg-surface-2"
+                  >
+                    Export CSV
+                  </a>
+                </div>
+              </>
+            )}
+          </div>
           {canManageFields && (
             <button
               type="button"

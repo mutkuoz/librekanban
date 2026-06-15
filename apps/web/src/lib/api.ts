@@ -1,5 +1,6 @@
 import type {
   Activity,
+  ApiToken,
   Attachment,
   Board,
   BoardCard,
@@ -11,6 +12,7 @@ import type {
   CreateColumnInput,
   CreateCustomFieldInput,
   CreateLabelInput,
+  CreatedToken,
   CustomField,
   Label,
   MoveCardInput,
@@ -164,6 +166,11 @@ export const api = {
     fd.append('file', file);
     return uploadForm('/api/import/trello', fd);
   },
+
+  listTokens: () => req<ApiToken[]>('GET', '/tokens'),
+  createToken: (name: string, expiresInDays?: number) =>
+    req<CreatedToken>('POST', '/tokens', { name, expiresInDays }),
+  revokeToken: (id: string) => req<{ ok: boolean }>('DELETE', `/tokens/${id}`),
 };
 
 async function uploadForm<T>(path: string, fd: FormData): Promise<T> {

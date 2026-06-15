@@ -2,8 +2,8 @@ import { Button } from '@/components/ui/button';
 import { signOut } from '@/lib/auth';
 import { useMe } from '@/lib/queries';
 import { useQueryClient } from '@tanstack/react-query';
-import { Outlet, useRouter } from '@tanstack/react-router';
-import { Loader2, LogOut } from 'lucide-react';
+import { Link, Outlet, useRouter } from '@tanstack/react-router';
+import { Loader2, LogOut, Settings } from 'lucide-react';
 import { AuthPage } from './AuthPage';
 import { NotificationBell } from './NotificationBell';
 
@@ -34,6 +34,13 @@ export function AppShell() {
         <div className="font-semibold tracking-tight">librekanban</div>
         <div className="flex items-center gap-2 text-sm">
           <NotificationBell />
+          <Link
+            to="/settings"
+            title="Settings"
+            className="grid size-9 place-items-center rounded-md text-muted hover:bg-surface-2 hover:text-text"
+          >
+            <Settings className="size-4" />
+          </Link>
           <span className="text-muted">{me.user.name}</span>
           <Button variant="ghost" size="icon" onClick={onSignOut} title="Sign out">
             <LogOut className="size-4" />

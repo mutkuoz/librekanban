@@ -1,6 +1,7 @@
 import { createRootRoute, createRoute, createRouter } from '@tanstack/react-router';
 import { AppShell } from './components/AppShell';
 import { BoardsListPage } from './components/BoardsListPage';
+import { SettingsPage } from './components/SettingsPage';
 import { BoardPage } from './features/board/BoardPage';
 
 const rootRoute = createRootRoute({ component: AppShell });
@@ -9,6 +10,12 @@ const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
   component: BoardsListPage,
+});
+
+const settingsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/settings',
+  component: SettingsPage,
 });
 
 const boardRoute = createRoute({
@@ -20,7 +27,7 @@ const boardRoute = createRoute({
   },
 });
 
-const routeTree = rootRoute.addChildren([indexRoute, boardRoute]);
+const routeTree = rootRoute.addChildren([indexRoute, settingsRoute, boardRoute]);
 
 export const router = createRouter({ routeTree });
 
