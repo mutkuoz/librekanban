@@ -67,6 +67,8 @@ export const boardCardSchema = cardSchema.extend({
   checklistTotal: z.number().int(),
   commentCount: z.number().int(),
   attachmentCount: z.number().int(),
+  /** Count of incomplete cards blocking this one (drives the "blocked" chip). */
+  blockedCount: z.number().int(),
   customFieldValues: z.record(z.string(), z.unknown()),
 });
 

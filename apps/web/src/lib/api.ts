@@ -169,6 +169,11 @@ export const api = {
   unassignCard: (cardId: string, userId: string) =>
     req<{ ok: boolean }>('DELETE', `/cards/${cardId}/assignees/${userId}`),
 
+  addDependency: (cardId: string, blockerId: string) =>
+    req<{ ok: boolean }>('POST', `/cards/${cardId}/dependencies`, { blockerId }),
+  removeDependency: (cardId: string, blockerId: string) =>
+    req<{ ok: boolean }>('DELETE', `/cards/${cardId}/dependencies/${blockerId}`),
+
   createLabel: (boardId: string, input: CreateLabelInput) =>
     req<Label>('POST', `/boards/${boardId}/labels`, input),
   deleteLabel: (labelId: string) => req<{ ok: boolean }>('DELETE', `/labels/${labelId}`),

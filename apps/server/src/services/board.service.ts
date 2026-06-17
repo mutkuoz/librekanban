@@ -29,6 +29,7 @@ import { toBoardDTO, toCardDTO, toColumnDTO } from '../lib/serialize';
 import { slugify } from '../lib/slug';
 import { recordActivity } from './activity';
 import { listCustomFields } from './custom-field.service';
+import { blockedCountsForBoard } from './dependency.service';
 import { initialPositions, positionBetween } from './ordering';
 import { assertBoardPermission, assertWorkspacePermission } from './permissions';
 
@@ -268,44 +269,52 @@ async function enrichBoardCards(
 ): Promise<BoardCard[]> {
   if (cardRows.length === 0) return [];
 
-  const [labelRows, assigneeRows, checklistRows, commentRows, attachmentRows, cfValueRows] =
-    await Promise.all([
-      db
-        .select({ cardId: cardLabels.cardId, labelId: cardLabels.labelId })
-        .from(cardLabels)
-        .innerJoin(cards, eq(cards.id, cardLabels.cardId))
-        .where(eq(cards.boardId, boardId)),
-      db
-        .select({ cardId: cardAssignees.cardId, userId: cardAssignees.userId })
-        .from(cardAssignees)
-        .innerJoin(cards, eq(cards.id, cardAssignees.cardId))
-        .where(eq(cards.boardId, boardId)),
-      db
-        .select({ cardId: checklists.cardId, isDone: checklistItems.isDone })
-        .from(checklistItems)
-        .innerJoin(checklists, eq(checklists.id, checklistItems.checklistId))
-        .innerJoin(cards, eq(cards.id, checklists.cardId))
-        .where(eq(cards.boardId, boardId)),
-      db
-        .select({ cardId: comments.cardId })
-        .from(comments)
-        .innerJoin(cards, eq(cards.id, comments.cardId))
-        .where(and(eq(cards.boardId, boardId), isNull(comments.deletedAt))),
-      db
-        .select({ cardId: attachments.cardId })
-        .from(attachments)
-        .innerJoin(cards, eq(cards.id, attachments.cardId))
-        .where(eq(cards.boardId, boardId)),
-      db
-        .select({
-          cardId: customFieldValues.cardId,
-          fieldId: customFieldValues.fieldId,
-          value: customFieldValues.value,
-        })
-        .from(customFieldValues)
-        .innerJoin(cards, eq(cards.id, customFieldValues.cardId))
-        .where(eq(cards.boardId, boardId)),
-    ]);
+  const [
+    labelRows,
+    assigneeRows,
+    checklistRows,
+    commentRows,
+    attachmentRows,
+    cfValueRows,
+    blockedCounts,
+  ] = await Promise.all([
+    db
+      .select({ cardId: cardLabels.cardId, labelId: cardLabels.labelId })
+      .from(cardLabels)
+      .innerJoin(cards, eq(cards.id, cardLabels.cardId))
+      .where(eq(cards.boardId, boardId)),
+    db
+      .select({ cardId: cardAssignees.cardId, userId: cardAssignees.userId })
+      .from(cardAssignees)
+      .innerJoin(cards, eq(cards.id, cardAssignees.cardId))
+      .where(eq(cards.boardId, boardId)),
+    db
+      .select({ cardId: checklists.cardId, isDone: checklistItems.isDone })
+      .from(checklistItems)
+      .innerJoin(checklists, eq(checklists.id, checklistItems.checklistId))
+      .innerJoin(cards, eq(cards.id, checklists.cardId))
+      .where(eq(cards.boardId, boardId)),
+    db
+      .select({ cardId: comments.cardId })
+      .from(comments)
+      .innerJoin(cards, eq(cards.id, comments.cardId))
+      .where(and(eq(cards.boardId, boardId), isNull(comments.deletedAt))),
+    db
+      .select({ cardId: attachments.cardId })
+      .from(attachments)
+      .innerJoin(cards, eq(cards.id, attachments.cardId))
+      .where(eq(cards.boardId, boardId)),
+    db
+      .select({
+        cardId: customFieldValues.cardId,
+        fieldId: customFieldValues.fieldId,
+        value: customFieldValues.value,
+      })
+      .from(customFieldValues)
+      .innerJoin(cards, eq(cards.id, customFieldValues.cardId))
+      .where(eq(cards.boardId, boardId)),
+    blockedCountsForBoard(db, boardId),
+  ]);
 
   const push = (map: Map<string, string[]>, key: string, value: string) => {
     const arr = map.get(key);
@@ -343,6 +352,7 @@ async function enrichBoardCards(
     checklistTotal: checks.get(c.id)?.total ?? 0,
     commentCount: commentCount.get(c.id) ?? 0,
     attachmentCount: attachmentCount.get(c.id) ?? 0,
+    blockedCount: blockedCounts.get(c.id) ?? 0,
     customFieldValues: cfValues.get(c.id) ?? {},
   }));
 }

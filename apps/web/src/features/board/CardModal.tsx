@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
-import { api, attachmentUrl } from '@/lib/api';
+import { ApiError, api, attachmentUrl } from '@/lib/api';
 import {
+  useBoard,
   useCardActions,
   useCardActivity,
   useCardDetail,
@@ -9,6 +10,7 @@ import {
 } from '@/lib/queries';
 import { cn } from '@/lib/utils';
 import {
+  type CardLink,
   type Checklist,
   type CustomField,
   type Label,
@@ -17,7 +19,7 @@ import {
   type WorkspaceMember,
 } from '@librekanban/shared';
 import * as Dialog from '@radix-ui/react-dialog';
-import { Archive, Check, Loader2, Paperclip, Plus, Trash2, X } from 'lucide-react';
+import { Archive, Ban, Check, Loader2, Paperclip, Plus, Trash2, X } from 'lucide-react';
 import { type ReactNode, useEffect, useState } from 'react';
 
 const LABEL_COLORS = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#64748b'];
@@ -319,6 +321,14 @@ export function CardModal({
                 </label>
               </section>
 
+              {/* Dependencies */}
+              <DependenciesSection
+                cardId={cardId}
+                boardId={boardId}
+                blockedBy={card.blockedBy}
+                blocking={card.blocking}
+              />
+
               {/* Comments */}
               <section className="space-y-3">
                 <SectionTitle>Comments</SectionTitle>
@@ -493,6 +503,8 @@ function verbText(verb: string): string {
     'card.moved': 'moved this card',
     'card.archived': 'archived this card',
     'card.deleted': 'deleted this card',
+    'card.linked': 'added a dependency',
+    'card.unlinked': 'removed a dependency',
     'comment.added': 'commented',
   };
   return map[verb] ?? verb;
@@ -503,6 +515,98 @@ function SectionTitle({ children }: { children: ReactNode }) {
     <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
       {children}
     </div>
+  );
+}
+
+function DependencyRow({ link, onRemove }: { link: CardLink; onRemove: () => void }) {
+  return (
+    <div className="group flex items-center gap-2 text-sm">
+      <Ban className={cn('size-3.5 shrink-0', link.isComplete ? 'text-muted' : 'text-amber-400')} />
+      <span className={cn('flex-1 truncate', link.isComplete && 'text-muted line-through')}>
+        <span className="text-xs text-muted">#{link.number}</span> {link.title}
+      </span>
+      <button
+        type="button"
+        onClick={onRemove}
+        title="Remove dependency"
+        className="opacity-0 transition-opacity group-hover:opacity-100"
+      >
+        <Trash2 className="size-3.5 text-muted hover:text-red-400" />
+      </button>
+    </div>
+  );
+}
+
+function DependenciesSection({
+  cardId,
+  boardId,
+  blockedBy,
+  blocking,
+}: {
+  cardId: string;
+  boardId: string;
+  blockedBy: CardLink[];
+  blocking: CardLink[];
+}) {
+  const { data: board } = useBoard(boardId);
+  const action = useCardActions(boardId, cardId);
+  const blockedIds = new Set(blockedBy.map((b) => b.id));
+  const options = (board?.cards ?? [])
+    .filter((c) => c.id !== cardId && !c.isArchived && !blockedIds.has(c.id))
+    .sort((a, b) => a.number - b.number);
+
+  return (
+    <section className="space-y-2">
+      <SectionTitle>Dependencies</SectionTitle>
+
+      {blockedBy.length > 0 && (
+        <div className="space-y-1">
+          <div className="text-xs text-muted">Blocked by</div>
+          {blockedBy.map((b) => (
+            <DependencyRow
+              key={b.id}
+              link={b}
+              onRemove={() => action.mutate(() => api.removeDependency(cardId, b.id))}
+            />
+          ))}
+        </div>
+      )}
+
+      {blocking.length > 0 && (
+        <div className="space-y-1">
+          <div className="text-xs text-muted">Blocking</div>
+          {blocking.map((b) => (
+            <DependencyRow
+              key={b.id}
+              link={b}
+              onRemove={() => action.mutate(() => api.removeDependency(b.id, cardId))}
+            />
+          ))}
+        </div>
+      )}
+
+      <select
+        value=""
+        onChange={(e) => {
+          const id = e.target.value;
+          if (id) action.mutate(() => api.addDependency(cardId, id));
+        }}
+        className="h-8 w-full rounded-md border border-border bg-bg px-2 text-sm text-muted outline-none focus:ring-2 focus:ring-brand/60"
+      >
+        <option value="">+ add a blocker…</option>
+        {options.map((c) => (
+          <option key={c.id} value={c.id}>
+            #{c.number} {c.title}
+          </option>
+        ))}
+      </select>
+
+      {action.isError && (
+        <div className="text-xs text-red-400">
+          {action.error instanceof ApiError ? action.error.message : 'Could not link the card'}
+        </div>
+      )}
+    </section>
   );
 }
 

@@ -21,6 +21,7 @@ export const forbidden = (msg = 'You are not allowed to do that') =>
   new ApiError(403, 'forbidden', msg);
 export const unauthorized = () => new ApiError(401, 'unauthorized', 'Authentication required');
 export const conflict = (msg: string) => new ApiError(409, 'conflict', msg);
+export const badRequest = (code: string, msg: string) => new ApiError(400, code, msg);
 
 /** Hono `onError` handler: map known errors to the shared error envelope. */
 export function handleError(err: Error, c: Context<AppEnv>) {

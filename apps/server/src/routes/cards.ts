@@ -18,10 +18,13 @@ import {
   unassignCard,
   updateCard,
 } from '../services/card.service';
+import { addDependency, removeDependency } from '../services/dependency.service';
 import { jsonBody, jsonResponse, makeRouter } from './_helpers';
 
 const cardParam = z.object({ cardId: z.string() });
 const assigneeParam = z.object({ cardId: z.string(), userId: z.string() });
+const dependencyParam = z.object({ cardId: z.string(), blockerId: z.string() });
+const okSchema = z.object({ ok: z.boolean() });
 
 export const cardRoutes = makeRouter();
 
@@ -83,6 +86,39 @@ cardRoutes.openapi(
   async (c) => {
     const { cardId, userId } = c.req.valid('param');
     await unassignCard(c.get('deps'), currentUser(c).id, cardId, userId);
+    return c.json({ ok: true }, 200);
+  },
+);
+
+cardRoutes.openapi(
+  createRoute({
+    method: 'post',
+    path: '/cards/{cardId}/dependencies',
+    tags: ['Cards'],
+    summary: 'Mark this card as blocked by another card',
+    request: { params: cardParam, body: jsonBody(z.object({ blockerId: z.string() })) },
+    responses: { 200: jsonResponse(okSchema) },
+  }),
+  async (c) => {
+    const { cardId } = c.req.valid('param');
+    const { blockerId } = c.req.valid('json');
+    await addDependency(c.get('deps'), currentUser(c).id, cardId, blockerId);
+    return c.json({ ok: true }, 200);
+  },
+);
+
+cardRoutes.openapi(
+  createRoute({
+    method: 'delete',
+    path: '/cards/{cardId}/dependencies/{blockerId}',
+    tags: ['Cards'],
+    summary: 'Remove a blocked-by dependency',
+    request: { params: dependencyParam },
+    responses: { 200: jsonResponse(okSchema) },
+  }),
+  async (c) => {
+    const { cardId, blockerId } = c.req.valid('param');
+    await removeDependency(c.get('deps'), currentUser(c).id, cardId, blockerId);
     return c.json({ ok: true }, 200);
   },
 );

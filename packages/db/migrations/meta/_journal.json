@@ -43,6 +43,13 @@
       "when": 1781711799271,
       "tag": "0005_violet_paladin",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1781715419752,
+      "tag": "0006_skinny_hobgoblin",
+      "breakpoints": true
     }
   ]
 }

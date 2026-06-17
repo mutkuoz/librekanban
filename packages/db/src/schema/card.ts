@@ -112,3 +112,27 @@ export const checklistItems = pgTable(
     byChecklist: index('checklist_items_checklist_idx').on(t.checklistId, t.position),
   }),
 );
+
+/**
+ * Card-to-card dependencies. A row means `blockerId` blocks `blockedId`
+ * (equivalently: `blockedId` is blocked by `blockerId`). Both cards live on the
+ * same board; cycles are prevented at write time.
+ */
+export const cardDependencies = pgTable(
+  'card_dependencies',
+  {
+    blockerId: text('blocker_id')
+      .notNull()
+      .references(() => cards.id, { onDelete: 'cascade' }),
+    blockedId: text('blocked_id')
+      .notNull()
+      .references(() => cards.id, { onDelete: 'cascade' }),
+    createdBy: text('created_by').references(() => user.id, { onDelete: 'set null' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.blockerId, t.blockedId] }),
+    byBlocked: index('card_deps_blocked_idx').on(t.blockedId),
+    byBlocker: index('card_deps_blocker_idx').on(t.blockerId),
+  }),
+);

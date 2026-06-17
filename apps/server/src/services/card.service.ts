@@ -28,6 +28,7 @@ import { listAttachments } from './attachment.service';
 import { listChecklists } from './checklist.service';
 import { listComments } from './comment.service';
 import { listCardCustomValues } from './custom-field.service';
+import { listCardDependencies } from './dependency.service';
 import { notify } from './notification.service';
 import { positionBetween } from './ordering';
 import { assertBoardPermission } from './permissions';
@@ -357,7 +358,7 @@ export async function getCardDetail(
   const card = await loadCard(deps.db, cardId);
   await assertBoardPermission(deps.db, userId, card.boardId, 'board:read');
 
-  const [labelRows, assigneeRows, checklists, comments, attachments, customFieldValues] =
+  const [labelRows, assigneeRows, checklists, comments, attachments, customFieldValues, deps_] =
     await Promise.all([
       deps.db
         .select({ labelId: cardLabels.labelId })
@@ -371,6 +372,7 @@ export async function getCardDetail(
       listComments(deps, userId, cardId),
       listAttachments(deps.db, cardId),
       listCardCustomValues(deps.db, cardId),
+      listCardDependencies(deps.db, cardId),
     ]);
 
   const checklistTotal = checklists.reduce((n, c) => n + c.items.length, 0);
@@ -384,10 +386,13 @@ export async function getCardDetail(
     checklistTotal,
     commentCount: comments.length,
     attachmentCount: attachments.length,
+    blockedCount: deps_.blockedBy.filter((b) => !b.isComplete).length,
     customFieldValues,
     comments,
     checklists,
     attachments,
+    blockedBy: deps_.blockedBy,
+    blocking: deps_.blocking,
   };
 }
 

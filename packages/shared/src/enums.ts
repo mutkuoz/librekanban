@@ -53,6 +53,8 @@ export const ACTIVITY_VERBS = [
   'card.moved',
   'card.archived',
   'card.deleted',
+  'card.linked',
+  'card.unlinked',
   'comment.added',
   'comment.updated',
   'comment.deleted',
