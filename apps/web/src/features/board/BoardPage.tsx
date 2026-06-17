@@ -1,11 +1,15 @@
 import { useBoard, useBoardRealtime, useMembers } from '@/lib/queries';
+import { cn } from '@/lib/utils';
 import { type Presence, can } from '@librekanban/shared';
 import { Link } from '@tanstack/react-router';
 import { Download, Search, SlidersHorizontal } from 'lucide-react';
 import { useState } from 'react';
-import { type BoardFilter, BoardView } from './BoardView';
+import { BoardView } from './BoardView';
+import { CalendarView } from './CalendarView';
 import { CardModal } from './CardModal';
 import { CustomFieldsDialog } from './CustomFieldsDialog';
+import { ListView } from './ListView';
+import type { BoardFilter } from './filter';
 
 function Avatars({ users }: { users: Presence['users'] }) {
   if (users.length === 0) return null;
@@ -31,6 +35,7 @@ export function BoardPage({ boardId }: { boardId: string }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [fieldsOpen, setFieldsOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [view, setView] = useState<'board' | 'list' | 'calendar'>('board');
   const [filter, setFilter] = useState<BoardFilter>({ text: '', labelId: null, assigneeId: null });
 
   if (isLoading)
@@ -53,6 +58,21 @@ export function BoardPage({ boardId }: { boardId: string }) {
             ← Boards
           </Link>
           <h1 className="font-semibold">{data.board.name}</h1>
+          <div className="flex rounded-md border border-border bg-surface p-0.5 text-sm">
+            {(['board', 'list', 'calendar'] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setView(v)}
+                className={cn(
+                  'rounded px-2.5 py-1 capitalize',
+                  view === v ? 'bg-surface-2 text-text' : 'text-muted hover:text-text',
+                )}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -140,13 +160,26 @@ export function BoardPage({ boardId }: { boardId: string }) {
       </header>
 
       <div className="min-h-0 flex-1">
-        <BoardView
-          detail={data}
-          members={memberList}
-          filter={filter}
-          canEdit={canEdit}
-          onCardClick={(c) => setSelectedId(c.id)}
-        />
+        {view === 'board' && (
+          <BoardView
+            detail={data}
+            members={memberList}
+            filter={filter}
+            canEdit={canEdit}
+            onCardClick={(c) => setSelectedId(c.id)}
+          />
+        )}
+        {view === 'list' && (
+          <ListView
+            detail={data}
+            members={memberList}
+            filter={filter}
+            onCardClick={(c) => setSelectedId(c.id)}
+          />
+        )}
+        {view === 'calendar' && (
+          <CalendarView detail={data} filter={filter} onCardClick={(c) => setSelectedId(c.id)} />
+        )}
       </div>
 
       {selectedId && (

@@ -60,6 +60,17 @@ test('drag a card from To Do to In Progress', async ({ page }) => {
   await expect(todo.getByTestId('card').filter({ hasText: 'Welcome! Drag me' })).toHaveCount(0);
 });
 
+test('switch between board, list, and calendar views', async ({ page }) => {
+  await signUp(page);
+  await openWelcomeBoard(page);
+
+  await page.getByRole('button', { name: 'list', exact: true }).click();
+  await expect(page.getByRole('button', { name: /Welcome! Drag me/ })).toBeVisible();
+
+  await page.getByRole('button', { name: 'calendar', exact: true }).click();
+  await expect(page.getByText('Mon', { exact: true })).toBeVisible();
+});
+
 test('open a card and create a label', async ({ page }) => {
   await signUp(page);
   await openWelcomeBoard(page);

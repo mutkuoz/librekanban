@@ -20,30 +20,14 @@ import type { BoardCard, WorkspaceMember } from '@librekanban/shared';
 import { Plus } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { type BoardList, Column } from './Column';
-
-export interface BoardFilter {
-  text: string;
-  labelId: string | null;
-  assigneeId: string | null;
-}
-
-const byPos = <T extends { position: string }>(a: T, b: T) =>
-  a.position < b.position ? -1 : a.position > b.position ? 1 : 0;
-
-function matches(card: BoardCard, filter: BoardFilter): boolean {
-  if (filter.labelId && !card.labelIds.includes(filter.labelId)) return false;
-  if (filter.assigneeId && !card.assigneeIds.includes(filter.assigneeId)) return false;
-  if (filter.text) {
-    const q = filter.text.toLowerCase();
-    if (!card.title.toLowerCase().includes(q) && !`#${card.number}`.includes(q)) return false;
-  }
-  return true;
-}
+import { type BoardFilter, byPosition as byPos, matchesFilter } from './filter';
 
 function groupLists(detail: BoardDetail, filter: BoardFilter): BoardList[] {
   return [...detail.columns].sort(byPos).map((column) => ({
     column,
-    cards: detail.cards.filter((c) => c.columnId === column.id && matches(c, filter)).sort(byPos),
+    cards: detail.cards
+      .filter((c) => c.columnId === column.id && matchesFilter(c, filter))
+      .sort(byPos),
   }));
 }
 

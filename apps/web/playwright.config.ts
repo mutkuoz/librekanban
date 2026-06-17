@@ -26,7 +26,9 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
     env: {
-      NODE_ENV: 'production',
+      // 'test' (not 'production') so better-auth's built-in rate limiter stays
+      // off — repeated E2E signups from one IP would otherwise be throttled.
+      NODE_ENV: 'test',
       PORT: String(PORT),
       PUBLIC_URL: baseURL,
       DATABASE_URL:

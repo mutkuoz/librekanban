@@ -44,9 +44,11 @@ export function createRateLimiters(
   env: Env,
   redis: Redis | null,
 ): { auth: MiddlewareHandler<AppEnv>; api: MiddlewareHandler<AppEnv> } {
+  // Strict only in production; dev/test must not self-throttle (e.g. E2E signups).
+  const authLimit = env.NODE_ENV === 'production' ? 20 : 100_000;
   const auth = rateLimiter<AppEnv>({
     windowMs: 60_000,
-    limit: 20,
+    limit: authLimit,
     standardHeaders: 'draft-7',
     keyGenerator: keyOf,
     store: redis ? redisStore(redis, 'rl:auth') : undefined,
