@@ -1,4 +1,5 @@
 import { createRootRoute, createRoute, createRouter } from '@tanstack/react-router';
+import { AcceptInvitePage } from './components/AcceptInvitePage';
 import { AppShell } from './components/AppShell';
 import { BoardsListPage } from './components/BoardsListPage';
 import { SettingsPage } from './components/SettingsPage';
@@ -27,7 +28,16 @@ const boardRoute = createRoute({
   },
 });
 
-const routeTree = rootRoute.addChildren([indexRoute, settingsRoute, boardRoute]);
+const inviteRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/invite/$token',
+  component: function InviteRoute() {
+    const { token } = inviteRoute.useParams();
+    return <AcceptInvitePage token={token} />;
+  },
+});
+
+const routeTree = rootRoute.addChildren([indexRoute, settingsRoute, boardRoute, inviteRoute]);
 
 export const router = createRouter({ routeTree });
 

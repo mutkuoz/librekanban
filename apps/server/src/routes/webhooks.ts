@@ -8,7 +8,6 @@ import {
 } from '@librekanban/shared';
 import { forbidden } from '../lib/errors';
 import { currentUser } from '../middleware/auth';
-import { primaryWorkspaceId } from '../services/permissions';
 import {
   createWebhook,
   deleteWebhook,
@@ -16,7 +15,7 @@ import {
   listWebhooks,
   updateWebhook,
 } from '../services/webhook.service';
-import { jsonBody, jsonResponse, makeRouter } from './_helpers';
+import { activeWorkspaceId, jsonBody, jsonResponse, makeRouter } from './_helpers';
 
 const okSchema = z.object({ ok: z.boolean() });
 
@@ -32,7 +31,7 @@ webhookRoutes.openapi(
   async (c) => {
     const deps = c.get('deps');
     const userId = currentUser(c).id;
-    const ws = await primaryWorkspaceId(deps.db, userId);
+    const ws = await activeWorkspaceId(c);
     if (!ws) return c.json([], 200);
     return c.json(await listWebhooks(deps, userId, ws), 200);
   },
@@ -50,7 +49,7 @@ webhookRoutes.openapi(
   async (c) => {
     const deps = c.get('deps');
     const userId = currentUser(c).id;
-    const ws = await primaryWorkspaceId(deps.db, userId);
+    const ws = await activeWorkspaceId(c);
     if (!ws) throw forbidden('You are not a member of any workspace');
     return c.json(await createWebhook(deps, userId, ws, c.req.valid('json')), 200);
   },

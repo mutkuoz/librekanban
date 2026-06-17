@@ -9,6 +9,7 @@ import { commentRoutes } from './comments';
 import { customFieldRoutes } from './custom-fields';
 import { exportRoutes } from './export';
 import { importRoutes } from './import';
+import { invitationRoutes } from './invitations';
 import { labelRoutes } from './labels';
 import { meRoutes } from './me';
 import { memberRoutes } from './members';
@@ -22,6 +23,7 @@ export function createApiRoutes() {
   api.use('*', requireAuth);
   api.route('/', meRoutes);
   api.route('/', memberRoutes);
+  api.route('/', invitationRoutes);
   api.route('/', notificationRoutes);
   api.route('/', boardRoutes);
   api.route('/', columnRoutes);

@@ -35,15 +35,19 @@ fan-out across instances, and rate limiting (in-memory or Redis-backed,
 **Done:** custom fields (text/number/date/select/checkbox/url/email, typed values
 on cards, admin-managed); **scoped API tokens** (`Authorization: Bearer` for the
 REST API); **outbound webhooks** (HMAC-signed delivery + delivery log, managed in
-Settings); **List + Calendar board views** (header switcher).
+Settings); **List + Calendar board views** (header switcher); **team
+collaboration / admin panel** — multi-workspace switching (`X-Workspace-Id`),
+member management (change role, remove, last-owner guard), and **email
+invitations** (token links, accept page) in Settings, all RBAC-gated.
 **Remaining:** filter/sort by custom field, card dependencies, advanced
-filtering, OIDC/SSO + 2FA/passkeys, theming/white-label, i18n, admin panel.
+filtering, OIDC/SSO + 2FA/passkeys, theming/white-label, i18n.
 
 ### M5 — Polish & ops (in progress)
 **Done:** importers — **Kanboard/CSV** + **Trello JSON** (upload → new board);
 **export** — board to JSON or flat-cards CSV (download); **Playwright E2E**
 covering sign-up → seeded board → add card → **drag-and-drop** → card modal /
-labels, running in CI against the single-container build.
+labels, plus team settings (member list + invite), running in CI against the
+single-container build.
 **Remaining:** backup/restore CLI, SQLite "lite mode", metrics/observability,
 upgrade tooling, large-board virtualization, a11y + keyboard shortcuts,
 board/card templates, security hardening.

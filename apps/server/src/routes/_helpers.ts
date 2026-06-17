@@ -1,7 +1,19 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
+import type { Context } from 'hono';
 import type { ZodType } from 'zod';
 import type { AppEnv } from '../lib/context';
 import { ApiError } from '../lib/errors';
+import { currentUser } from '../middleware/auth';
+import { resolveActiveWorkspace } from '../services/permissions';
+
+/** The workspace the request acts in (X-Workspace-Id header, else primary). */
+export function activeWorkspaceId(c: Context<AppEnv>): Promise<string | null> {
+  return resolveActiveWorkspace(
+    c.get('deps').db,
+    currentUser(c).id,
+    c.req.header('x-workspace-id') ?? null,
+  );
+}
 
 /**
  * An OpenAPIHono router wired to our app context + error envelope. The

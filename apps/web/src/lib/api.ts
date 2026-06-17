@@ -11,11 +11,13 @@ import type {
   CreateCardInput,
   CreateColumnInput,
   CreateCustomFieldInput,
+  CreateInvitationInput,
   CreateLabelInput,
   CreateWebhookInput,
   CreatedToken,
   CreatedWebhook,
   CustomField,
+  Invitation,
   Label,
   MoveCardInput,
   MoveColumnInput,
@@ -40,10 +42,39 @@ export class ApiError extends Error {
   }
 }
 
+// The workspace the client is acting in (sent as X-Workspace-Id). Persisted so
+// it survives reloads; the server validates membership and falls back to primary.
+const WS_KEY = 'lk_active_workspace';
+let activeWs: string | null = (() => {
+  try {
+    return localStorage.getItem(WS_KEY);
+  } catch {
+    return null;
+  }
+})();
+
+export function setActiveWorkspace(id: string): void {
+  activeWs = id;
+  try {
+    localStorage.setItem(WS_KEY, id);
+  } catch {}
+}
+
+export function getActiveWorkspace(): string | null {
+  return activeWs;
+}
+
+function buildHeaders(json: boolean): Record<string, string> {
+  const h: Record<string, string> = {};
+  if (json) h['content-type'] = 'application/json';
+  if (activeWs) h['x-workspace-id'] = activeWs;
+  return h;
+}
+
 async function req<T>(method: string, path: string, body?: unknown): Promise<T> {
   const res = await fetch(`/api${path}`, {
     method,
-    headers: body ? { 'content-type': 'application/json' } : undefined,
+    headers: buildHeaders(body != null),
     credentials: 'include',
     body: body ? JSON.stringify(body) : undefined,
   });
@@ -77,6 +108,16 @@ export interface BoardDetail {
 export const api = {
   me: () => req<MeResponse>('GET', '/me'),
   members: () => req<WorkspaceMember[]>('GET', '/members'),
+  setMemberRole: (userId: string, role: WorkspaceRole) =>
+    req<{ ok: boolean }>('PATCH', `/members/${userId}`, { role }),
+  removeMember: (userId: string) => req<{ ok: boolean }>('DELETE', `/members/${userId}`),
+
+  listInvitations: () => req<Invitation[]>('GET', '/invitations'),
+  createInvitation: (input: CreateInvitationInput) =>
+    req<Invitation>('POST', '/invitations', input),
+  revokeInvitation: (id: string) => req<{ ok: boolean }>('DELETE', `/invitations/${id}`),
+  acceptInvitation: (token: string) =>
+    req<{ workspaceId: string }>('POST', '/invitations/accept', { token }),
 
   listBoards: () => req<Board[]>('GET', '/boards'),
   createBoard: (input: CreateBoardInput) => req<Board>('POST', '/boards', input),
@@ -181,7 +222,12 @@ export const api = {
 };
 
 async function uploadForm<T>(path: string, fd: FormData): Promise<T> {
-  const res = await fetch(path, { method: 'POST', credentials: 'include', body: fd });
+  const res = await fetch(path, {
+    method: 'POST',
+    credentials: 'include',
+    headers: activeWs ? { 'x-workspace-id': activeWs } : undefined,
+    body: fd,
+  });
   if (!res.ok) {
     const data = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
     throw new ApiError(res.status, 'upload_failed', data?.error?.message ?? 'Upload failed');

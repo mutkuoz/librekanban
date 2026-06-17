@@ -1,9 +1,11 @@
 import { Button } from '@/components/ui/button';
+import { getActiveWorkspace, setActiveWorkspace } from '@/lib/api';
 import { signOut } from '@/lib/auth';
 import { useMe } from '@/lib/queries';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link, Outlet, useRouter } from '@tanstack/react-router';
 import { Loader2, LogOut, Settings } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { AuthPage } from './AuthPage';
 import { NotificationBell } from './NotificationBell';
 
@@ -11,6 +13,20 @@ export function AppShell() {
   const { data: me, isLoading, isError } = useMe();
   const qc = useQueryClient();
   const router = useRouter();
+  const [activeWs, setActiveWsState] = useState<string | null>(getActiveWorkspace);
+
+  const workspaces = me?.workspaces ?? [];
+
+  // Keep the active workspace valid: if unset (or pointing at a workspace we're
+  // no longer a member of), fall back to the primary (first) workspace.
+  useEffect(() => {
+    const primary = workspaces[0];
+    if (!primary) return;
+    if (!activeWs || !workspaces.some((w) => w.id === activeWs)) {
+      setActiveWorkspace(primary.id);
+      setActiveWsState(primary.id);
+    }
+  }, [workspaces, activeWs]);
 
   if (isLoading) {
     return (
@@ -28,10 +44,38 @@ export function AppShell() {
     router.navigate({ to: '/' });
   };
 
+  const onSwitchWorkspace = async (id: string) => {
+    setActiveWorkspace(id);
+    setActiveWsState(id);
+    // Boards/members/etc. are workspace-scoped via the X-Workspace-Id header, so
+    // refetch everything, then return to the boards list (the open board may not
+    // belong to the new workspace).
+    await qc.invalidateQueries();
+    router.navigate({ to: '/' });
+  };
+
   return (
     <div className="flex h-full flex-col">
       <nav className="flex items-center justify-between border-b border-border px-4 py-2.5">
-        <div className="font-semibold tracking-tight">librekanban</div>
+        <div className="flex items-center gap-3">
+          <Link to="/" className="font-semibold tracking-tight">
+            librekanban
+          </Link>
+          {workspaces.length > 1 && (
+            <select
+              value={activeWs ?? workspaces[0]?.id ?? ''}
+              onChange={(e) => onSwitchWorkspace(e.target.value)}
+              title="Switch workspace"
+              className="h-8 rounded-md border border-border bg-bg px-2 text-sm text-muted outline-none hover:text-text focus:ring-2 focus:ring-brand/60"
+            >
+              {workspaces.map((w) => (
+                <option key={w.id} value={w.id}>
+                  {w.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
         <div className="flex items-center gap-2 text-sm">
           <NotificationBell />
           <Link

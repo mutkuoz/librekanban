@@ -24,17 +24,13 @@ import type {
 } from '@librekanban/shared';
 import { and, asc, desc, eq, isNull } from 'drizzle-orm';
 import type { Deps } from '../lib/context';
-import { forbidden, notFound } from '../lib/errors';
+import { notFound } from '../lib/errors';
 import { toBoardDTO, toCardDTO, toColumnDTO } from '../lib/serialize';
 import { slugify } from '../lib/slug';
 import { recordActivity } from './activity';
 import { listCustomFields } from './custom-field.service';
 import { initialPositions, positionBetween } from './ordering';
-import {
-  assertBoardPermission,
-  assertWorkspacePermission,
-  primaryWorkspaceId,
-} from './permissions';
+import { assertBoardPermission, assertWorkspacePermission } from './permissions';
 
 type BoardRow = typeof boards.$inferSelect;
 
@@ -225,9 +221,7 @@ export async function createImportedBoard(
   });
 }
 
-export async function listBoards(deps: Deps, userId: string): Promise<Board[]> {
-  const workspaceId = await primaryWorkspaceId(deps.db, userId);
-  if (!workspaceId) return [];
+export async function listBoards(deps: Deps, workspaceId: string): Promise<Board[]> {
   const rows = await deps.db
     .select()
     .from(boards)
@@ -239,10 +233,9 @@ export async function listBoards(deps: Deps, userId: string): Promise<Board[]> {
 export async function createBoard(
   deps: Deps,
   userId: string,
+  workspaceId: string,
   input: CreateBoardInput,
 ): Promise<Board> {
-  const workspaceId = await primaryWorkspaceId(deps.db, userId);
-  if (!workspaceId) throw forbidden('You are not a member of any workspace');
   await assertWorkspacePermission(deps.db, userId, workspaceId, 'board:create');
 
   const board = await createBoardWithDefaults(deps.db, {

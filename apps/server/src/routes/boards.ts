@@ -6,9 +6,10 @@ import {
   createBoardSchema,
   updateBoardSchema,
 } from '@librekanban/shared';
+import { forbidden } from '../lib/errors';
 import { currentUser } from '../middleware/auth';
 import { createBoard, getBoardDetail, listBoards, updateBoard } from '../services/board.service';
-import { jsonBody, jsonResponse, makeRouter } from './_helpers';
+import { activeWorkspaceId, jsonBody, jsonResponse, makeRouter } from './_helpers';
 
 const boardParam = z.object({ boardId: z.string() });
 
@@ -35,8 +36,9 @@ boardRoutes.openapi(
     responses: { 200: jsonResponse(z.array(boardSchema)) },
   }),
   async (c) => {
-    const user = currentUser(c);
-    return c.json(await listBoards(c.get('deps'), user.id), 200);
+    const ws = await activeWorkspaceId(c);
+    if (!ws) return c.json([], 200);
+    return c.json(await listBoards(c.get('deps'), ws), 200);
   },
 );
 
@@ -51,8 +53,9 @@ boardRoutes.openapi(
   }),
   async (c) => {
     const user = currentUser(c);
-    const body = c.req.valid('json');
-    return c.json(await createBoard(c.get('deps'), user.id, body), 200);
+    const ws = await activeWorkspaceId(c);
+    if (!ws) throw forbidden('You are not a member of any workspace');
+    return c.json(await createBoard(c.get('deps'), user.id, ws, c.req.valid('json')), 200);
   },
 );
 

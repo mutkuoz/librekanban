@@ -69,6 +69,42 @@ export function useMembers() {
   return useQuery({ queryKey: ['members'], queryFn: api.members });
 }
 
+export function useMemberActions() {
+  const qc = useQueryClient();
+  const invalidate = () => qc.invalidateQueries({ queryKey: ['members'] });
+  return {
+    setRole: useMutation({
+      mutationFn: (v: { userId: string; role: Parameters<typeof api.setMemberRole>[1] }) =>
+        api.setMemberRole(v.userId, v.role),
+      onSuccess: invalidate,
+    }),
+    remove: useMutation({
+      mutationFn: (userId: string) => api.removeMember(userId),
+      onSuccess: invalidate,
+    }),
+  };
+}
+
+export function useInvitations() {
+  return useQuery({ queryKey: ['invitations'], queryFn: api.listInvitations });
+}
+
+export function useInvitationActions() {
+  const qc = useQueryClient();
+  const invalidate = () => qc.invalidateQueries({ queryKey: ['invitations'] });
+  return {
+    create: useMutation({
+      mutationFn: (input: Parameters<typeof api.createInvitation>[0]) =>
+        api.createInvitation(input),
+      onSuccess: invalidate,
+    }),
+    revoke: useMutation({
+      mutationFn: (id: string) => api.revokeInvitation(id),
+      onSuccess: invalidate,
+    }),
+  };
+}
+
 export function useCardDetail(cardId: string | null) {
   return useQuery({
     queryKey: ['card', cardId],

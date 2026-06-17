@@ -11,6 +11,7 @@ export * from './schemas/attachment';
 export * from './schemas/comment';
 export * from './schemas/checklist';
 export * from './schemas/member';
+export * from './schemas/invitation';
 export * from './schemas/custom-field';
 export * from './schemas/token';
 export * from './schemas/webhook';

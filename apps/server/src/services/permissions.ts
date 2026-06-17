@@ -86,3 +86,16 @@ export async function primaryWorkspaceId(db: Database, userId: string): Promise<
     .limit(1);
   return rows[0]?.workspaceId ?? null;
 }
+
+/**
+ * The workspace to act in: the `requested` one if the user is a member of it
+ * (from the X-Workspace-Id header), otherwise their primary workspace.
+ */
+export async function resolveActiveWorkspace(
+  db: Database,
+  userId: string,
+  requested: string | null | undefined,
+): Promise<string | null> {
+  if (requested && (await workspaceRoleOf(db, requested, userId))) return requested;
+  return primaryWorkspaceId(db, userId);
+}

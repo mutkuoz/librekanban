@@ -9,8 +9,7 @@ import {
   setEmailEnabled,
   unreadCount,
 } from '../services/notification.service';
-import { primaryWorkspaceId } from '../services/permissions';
-import { jsonBody, jsonResponse, makeRouter } from './_helpers';
+import { activeWorkspaceId, jsonBody, jsonResponse, makeRouter } from './_helpers';
 
 const okSchema = z.object({ ok: z.boolean() });
 const prefsSchema = z.object({ emailEnabled: z.boolean() });
@@ -74,7 +73,7 @@ notificationRoutes.openapi(
   async (c) => {
     const deps = c.get('deps');
     const userId = currentUser(c).id;
-    const ws = await primaryWorkspaceId(deps.db, userId);
+    const ws = await activeWorkspaceId(c);
     const emailEnabled = ws ? await getEmailEnabled(deps.db, userId, ws) : true;
     return c.json({ emailEnabled }, 200);
   },
@@ -91,7 +90,7 @@ notificationRoutes.openapi(
   async (c) => {
     const deps = c.get('deps');
     const userId = currentUser(c).id;
-    const ws = await primaryWorkspaceId(deps.db, userId);
+    const ws = await activeWorkspaceId(c);
     const { emailEnabled } = c.req.valid('json');
     if (ws) await setEmailEnabled(deps.db, userId, ws, emailEnabled);
     return c.json({ emailEnabled }, 200);
