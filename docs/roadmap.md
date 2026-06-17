@@ -35,10 +35,9 @@ fan-out across instances, and rate limiting (in-memory or Redis-backed,
 **Done:** custom fields (text/number/date/select/checkbox/url/email, typed values
 on cards, admin-managed); **scoped API tokens** (`Authorization: Bearer` for the
 REST API); **outbound webhooks** (HMAC-signed delivery + delivery log, managed in
-Settings).
-**Remaining:** filter/sort by custom field, List + Calendar views, card
-dependencies, advanced filtering, OIDC/SSO + 2FA/passkeys, theming/white-label,
-i18n, admin panel.
+Settings); **List + Calendar board views** (header switcher).
+**Remaining:** filter/sort by custom field, card dependencies, advanced
+filtering, OIDC/SSO + 2FA/passkeys, theming/white-label, i18n, admin panel.
 
 ### M5 — Polish & ops (in progress)
 **Done:** importers — **Kanboard/CSV** + **Trello JSON** (upload → new board);
