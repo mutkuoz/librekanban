@@ -14,6 +14,7 @@ export * from './attachment';
 export * from './preference';
 export * from './custom-field';
 export * from './api-token';
+export * from './webhook';
 
 // ── Relations (enable Drizzle's relational query API, e.g. board + columns + cards) ──
 

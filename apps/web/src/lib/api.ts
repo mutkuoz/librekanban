@@ -12,7 +12,9 @@ import type {
   CreateColumnInput,
   CreateCustomFieldInput,
   CreateLabelInput,
+  CreateWebhookInput,
   CreatedToken,
+  CreatedWebhook,
   CustomField,
   Label,
   MoveCardInput,
@@ -20,6 +22,7 @@ import type {
   Notification,
   UpdateCardInput,
   UpdateColumnInput,
+  Webhook,
   WorkspaceMember,
   WorkspaceRole,
 } from '@librekanban/shared';
@@ -171,6 +174,10 @@ export const api = {
   createToken: (name: string, expiresInDays?: number) =>
     req<CreatedToken>('POST', '/tokens', { name, expiresInDays }),
   revokeToken: (id: string) => req<{ ok: boolean }>('DELETE', `/tokens/${id}`),
+
+  listWebhooks: () => req<Webhook[]>('GET', '/webhooks'),
+  createWebhook: (input: CreateWebhookInput) => req<CreatedWebhook>('POST', '/webhooks', input),
+  deleteWebhook: (id: string) => req<{ ok: boolean }>('DELETE', `/webhooks/${id}`),
 };
 
 async function uploadForm<T>(path: string, fd: FormData): Promise<T> {

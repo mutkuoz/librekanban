@@ -14,6 +14,7 @@ import { meRoutes } from './me';
 import { memberRoutes } from './members';
 import { notificationRoutes } from './notifications';
 import { tokenRoutes } from './tokens';
+import { webhookRoutes } from './webhooks';
 
 /** All authenticated API routes, mounted by the app at `/api`. */
 export function createApiRoutes() {
@@ -33,5 +34,6 @@ export function createApiRoutes() {
   api.route('/', importRoutes);
   api.route('/', exportRoutes);
   api.route('/', tokenRoutes);
+  api.route('/', webhookRoutes);
   return api;
 }

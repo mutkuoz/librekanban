@@ -161,6 +161,25 @@ export function useTokenActions() {
   };
 }
 
+export function useWebhooks() {
+  return useQuery({ queryKey: ['webhooks'], queryFn: api.listWebhooks });
+}
+
+export function useWebhookActions() {
+  const qc = useQueryClient();
+  const invalidate = () => qc.invalidateQueries({ queryKey: ['webhooks'] });
+  return {
+    create: useMutation({
+      mutationFn: (input: Parameters<typeof api.createWebhook>[0]) => api.createWebhook(input),
+      onSuccess: invalidate,
+    }),
+    remove: useMutation({
+      mutationFn: (id: string) => api.deleteWebhook(id),
+      onSuccess: invalidate,
+    }),
+  };
+}
+
 export function useNotificationPreferences() {
   return useQuery({ queryKey: ['prefs'], queryFn: api.notificationPreferences });
 }

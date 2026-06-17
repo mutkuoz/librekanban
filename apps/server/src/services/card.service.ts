@@ -31,6 +31,7 @@ import { listCardCustomValues } from './custom-field.service';
 import { notify } from './notification.service';
 import { positionBetween } from './ordering';
 import { assertBoardPermission } from './permissions';
+import { dispatchWebhooks } from './webhook.service';
 
 async function loadCard(db: Database, cardId: string) {
   const rows = await db.select().from(cards).where(eq(cards.id, cardId)).limit(1);
@@ -151,6 +152,11 @@ export async function createCard(
   });
 
   deps.bus.publish({ type: 'card.updated', boardId, entityId: card.id, actorId: userId });
+  dispatchWebhooks(deps, board.workspaceId, 'card.created', {
+    cardId: card.id,
+    boardId,
+    title: card.title,
+  });
   return toCardDTO(card);
 }
 
@@ -197,6 +203,11 @@ export async function updateCard(
     entityId: cardId,
     version: updated!.version,
     actorId: userId,
+  });
+  dispatchWebhooks(deps, board.workspaceId, 'card.updated', {
+    cardId,
+    boardId: existing.boardId,
+    title: updated!.title,
   });
   return toCardDTO(updated!);
 }
@@ -255,6 +266,11 @@ export async function moveCard(
     version: updated!.version,
     actorId: userId,
   });
+  dispatchWebhooks(deps, board.workspaceId, 'card.moved', {
+    cardId,
+    boardId: existing.boardId,
+    toColumnId: input.columnId,
+  });
   return toCardDTO(updated!);
 }
 
@@ -275,6 +291,7 @@ export async function deleteCard(deps: Deps, userId: string, cardId: string): Pr
     entityId: cardId,
     actorId: userId,
   });
+  dispatchWebhooks(deps, board.workspaceId, 'card.deleted', { cardId, boardId: existing.boardId });
 }
 
 export async function assignCard(
@@ -304,6 +321,11 @@ export async function assignCard(
     boardId: card.boardId,
     entityId: cardId,
     actorId: userId,
+  });
+  dispatchWebhooks(deps, board.workspaceId, 'card.updated', {
+    cardId,
+    boardId: card.boardId,
+    assigneeId,
   });
 }
 

@@ -13,6 +13,7 @@ export * from './schemas/checklist';
 export * from './schemas/member';
 export * from './schemas/custom-field';
 export * from './schemas/token';
+export * from './schemas/webhook';
 export * from './schemas/activity';
 export * from './schemas/notification';
 export * from './schemas/realtime';

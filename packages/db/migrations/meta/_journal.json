@@ -36,6 +36,13 @@
       "when": 1781566495195,
       "tag": "0004_mute_texas_twister",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1781711799271,
+      "tag": "0005_violet_paladin",
+      "breakpoints": true
     }
   ]
 }

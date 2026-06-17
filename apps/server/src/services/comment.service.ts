@@ -6,6 +6,7 @@ import { forbidden, notFound } from '../lib/errors';
 import { recordActivity } from './activity';
 import { notify } from './notification.service';
 import { assertBoardPermission } from './permissions';
+import { dispatchWebhooks } from './webhook.service';
 import { listWorkspaceMembers } from './workspace.service';
 
 type CommentRow = typeof comments.$inferSelect;
@@ -69,6 +70,7 @@ export async function createComment(
     verb: 'comment.added',
   });
   deps.bus.publish({ type: 'comment.updated', boardId, entityId: cardId, actorId: userId });
+  dispatchWebhooks(deps, board.workspaceId, 'comment.added', { cardId, boardId });
 
   // Notify mentioned members and card assignees (mention takes precedence; skip author).
   const [members, assignees] = await Promise.all([
