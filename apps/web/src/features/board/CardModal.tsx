@@ -74,8 +74,8 @@ export function CardModal({
   return (
     <Dialog.Root open onOpenChange={(o) => !o && onClose()}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 max-h-[88vh] w-[94vw] max-w-2xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-border bg-surface p-5 shadow-2xl">
+        <Dialog.Overlay className="lk-overlay fixed inset-0 bg-black/60 backdrop-blur-sm" />
+        <Dialog.Content className="lk-content fixed left-1/2 top-1/2 max-h-[88vh] w-[94vw] max-w-2xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-border bg-surface p-5 shadow-2xl">
           <Dialog.Title className="sr-only">Card details</Dialog.Title>
           {isLoading || !card ? (
             <div className="grid h-40 place-items-center text-muted">

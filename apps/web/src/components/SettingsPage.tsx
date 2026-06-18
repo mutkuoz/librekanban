@@ -61,97 +61,132 @@ export function SettingsPage() {
     setName('');
   };
 
+  const sectionNav = [
+    canManageMembers && { id: 'members', label: t('settings.members') },
+    canManageMembers && { id: 'invitations', label: t('settings.invitations') },
+    { id: 'notifications', label: t('settings.notifications') },
+    { id: 'appearance', label: t('settings.appearance') },
+    { id: 'security', label: t('settings.security') },
+    { id: 'tokens', label: t('settings.apiTokens') },
+    canManageWebhooks && { id: 'webhooks', label: t('settings.webhooks') },
+  ].filter((s): s is { id: string; label: string } => Boolean(s));
+
   return (
-    <div className="mx-auto max-w-2xl p-6">
-      <Link to="/" className="text-sm text-muted hover:text-text">
-        {t('board.back')}
-      </Link>
-      <h1 className="mt-2 mb-6 text-xl font-semibold">{t('settings.title')}</h1>
+    <div className="h-full overflow-y-auto">
+      <div className="mx-auto max-w-2xl p-6">
+        <Link to="/" className="text-sm text-muted hover:text-text">
+          {t('board.back')}
+        </Link>
+        <h1 className="mt-2 mb-4 text-xl font-semibold">{t('settings.title')}</h1>
 
-      <section className="mb-8 rounded-xl border border-border bg-surface p-5">
-        <h2 className="mb-3 font-medium">{t('settings.notifications')}</h2>
-        <label className="flex items-center justify-between gap-2 text-sm">
-          {t('settings.emailActivity')}
-          <input
-            type="checkbox"
-            checked={prefs?.emailEnabled ?? true}
-            onChange={(e) => setPrefs.mutate(e.target.checked)}
-          />
-        </label>
-      </section>
+        <nav className="mb-6 flex flex-wrap gap-1.5">
+          {sectionNav.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() =>
+                document
+                  .getElementById(s.id)
+                  ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }
+              className="rounded-full border border-border bg-surface px-3 py-1 text-xs text-muted transition-colors hover:border-brand/60 hover:text-text"
+            >
+              {s.label}
+            </button>
+          ))}
+        </nav>
 
-      <AppearanceSection />
-
-      <SecuritySection enabled={me?.user.twoFactorEnabled ?? false} />
-
-      {canManageMembers && (
-        <>
-          <MembersSection canSetRole={canSetRole} currentUserId={me?.user.id ?? ''} />
-          <InvitationsSection />
-        </>
-      )}
-
-      <section className="rounded-xl border border-border bg-surface p-5">
-        <h2 className="mb-1 font-medium">{t('settings.apiTokens')}</h2>
-        <p className="mb-3 text-sm text-muted">{t('settings.tokensHint')}</p>
-
-        {newToken && (
-          <div className="mb-3 rounded-md border border-brand/50 bg-brand/10 p-3 text-sm">
-            <div className="mb-1 font-medium">{t('settings.tokenOnce')}</div>
-            <div className="flex items-center gap-2">
-              <code className="flex-1 break-all rounded bg-bg px-2 py-1 text-xs">{newToken}</code>
-              <button
-                type="button"
-                onClick={() => navigator.clipboard?.writeText(newToken)}
-                title={t('common.copy')}
-                className="text-muted hover:text-text"
-              >
-                <Copy className="size-4" />
-              </button>
-            </div>
-          </div>
+        {canManageMembers && (
+          <>
+            <MembersSection canSetRole={canSetRole} currentUserId={me?.user.id ?? ''} />
+            <InvitationsSection />
+          </>
         )}
 
-        <div className="mb-4 flex gap-2">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && addToken()}
-            placeholder={t('settings.tokenName')}
-            className="h-9 flex-1 rounded-md border border-border bg-bg px-2 text-sm outline-none focus:ring-2 focus:ring-brand/60"
-          />
-          <Button onClick={addToken} disabled={create.isPending}>
-            {create.isPending && <Loader2 className="size-4 animate-spin" />} {t('common.create')}
-          </Button>
-        </div>
+        <section
+          id="notifications"
+          className="mb-8 scroll-mt-6 rounded-xl border border-border bg-surface p-5"
+        >
+          <h2 className="mb-3 font-medium">{t('settings.notifications')}</h2>
+          <label className="flex items-center justify-between gap-2 text-sm">
+            {t('settings.emailActivity')}
+            <input
+              type="checkbox"
+              checked={prefs?.emailEnabled ?? true}
+              onChange={(e) => setPrefs.mutate(e.target.checked)}
+            />
+          </label>
+        </section>
 
-        <div className="space-y-1.5">
-          {(!tokens || tokens.length === 0) && (
-            <div className="text-sm text-muted">{t('settings.noTokens')}</div>
-          )}
-          {tokens?.map((tok) => (
-            <div key={tok.id} className="group flex items-center gap-2 text-sm">
-              <span className="flex-1">
-                {tok.name} <code className="text-xs text-muted">{tok.prefix}…</code>
-              </span>
-              <span className="text-xs text-muted">
-                {tok.lastUsedAt
-                  ? t('settings.usedOn', { date: new Date(tok.lastUsedAt).toLocaleDateString() })
-                  : t('settings.neverUsed')}
-              </span>
-              <button
-                type="button"
-                onClick={() => revoke.mutate(tok.id)}
-                className="opacity-0 transition-opacity group-hover:opacity-100"
-              >
-                <Trash2 className="size-3.5 text-muted hover:text-red-400" />
-              </button>
+        <AppearanceSection />
+
+        <SecuritySection enabled={me?.user.twoFactorEnabled ?? false} />
+
+        <section
+          id="tokens"
+          className="mb-8 scroll-mt-6 rounded-xl border border-border bg-surface p-5"
+        >
+          <h2 className="mb-1 font-medium">{t('settings.apiTokens')}</h2>
+          <p className="mb-3 text-sm text-muted">{t('settings.tokensHint')}</p>
+
+          {newToken && (
+            <div className="mb-3 rounded-md border border-brand/50 bg-brand/10 p-3 text-sm">
+              <div className="mb-1 font-medium">{t('settings.tokenOnce')}</div>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 break-all rounded bg-bg px-2 py-1 text-xs">{newToken}</code>
+                <button
+                  type="button"
+                  onClick={() => navigator.clipboard?.writeText(newToken)}
+                  title={t('common.copy')}
+                  className="text-muted hover:text-text"
+                >
+                  <Copy className="size-4" />
+                </button>
+              </div>
             </div>
-          ))}
-        </div>
-      </section>
+          )}
 
-      {canManageWebhooks && <WebhooksSection />}
+          <div className="mb-4 flex gap-2">
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && addToken()}
+              placeholder={t('settings.tokenName')}
+              className="h-9 flex-1 rounded-md border border-border bg-bg px-2 text-sm outline-none focus:ring-2 focus:ring-brand/60"
+            />
+            <Button onClick={addToken} disabled={create.isPending}>
+              {create.isPending && <Loader2 className="size-4 animate-spin" />} {t('common.create')}
+            </Button>
+          </div>
+
+          <div className="space-y-1.5">
+            {(!tokens || tokens.length === 0) && (
+              <div className="text-sm text-muted">{t('settings.noTokens')}</div>
+            )}
+            {tokens?.map((tok) => (
+              <div key={tok.id} className="group flex items-center gap-2 text-sm">
+                <span className="flex-1">
+                  {tok.name} <code className="text-xs text-muted">{tok.prefix}…</code>
+                </span>
+                <span className="text-xs text-muted">
+                  {tok.lastUsedAt
+                    ? t('settings.usedOn', { date: new Date(tok.lastUsedAt).toLocaleDateString() })
+                    : t('settings.neverUsed')}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => revoke.mutate(tok.id)}
+                  className="opacity-0 transition-opacity group-hover:opacity-100"
+                >
+                  <Trash2 className="size-3.5 text-muted hover:text-red-400" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {canManageWebhooks && <WebhooksSection />}
+      </div>
     </div>
   );
 }
@@ -170,7 +205,10 @@ function AppearanceSection() {
   const [accent, setAccentState] = useState<string>(getAccent);
 
   return (
-    <section className="mb-8 rounded-xl border border-border bg-surface p-5">
+    <section
+      id="appearance"
+      className="mb-8 scroll-mt-6 rounded-xl border border-border bg-surface p-5"
+    >
       <h2 className="mb-3 font-medium">{t('settings.appearance')}</h2>
 
       <div className="mb-4 flex items-center justify-between gap-2 text-sm">
@@ -285,7 +323,10 @@ function SecuritySection({ enabled }: { enabled: boolean }) {
     }, t('settings.twoFactorDisableError'));
 
   return (
-    <section className="mb-8 rounded-xl border border-border bg-surface p-5">
+    <section
+      id="security"
+      className="mb-8 scroll-mt-6 rounded-xl border border-border bg-surface p-5"
+    >
       <h2 className="mb-1 font-medium">{t('settings.security')}</h2>
       <p className="mb-3 text-sm text-muted">{t('settings.securityHint')}</p>
 
@@ -362,8 +403,12 @@ function MembersSection({
   };
 
   return (
-    <section className="mb-8 rounded-xl border border-border bg-surface p-5">
-      <h2 className="mb-3 font-medium">{t('settings.members')}</h2>
+    <section
+      id="members"
+      className="mb-8 scroll-mt-6 rounded-xl border border-border bg-surface p-5"
+    >
+      <h2 className="mb-1 font-medium">{t('settings.members')}</h2>
+      <p className="mb-3 text-sm text-muted">{t('settings.membersHint')}</p>
       <div className="space-y-1.5">
         {members?.map((m) => (
           <div key={m.id} className="group flex items-center gap-2 text-sm">
@@ -428,7 +473,10 @@ function InvitationsSection() {
   };
 
   return (
-    <section className="mb-8 rounded-xl border border-border bg-surface p-5">
+    <section
+      id="invitations"
+      className="mb-8 scroll-mt-6 rounded-xl border border-border bg-surface p-5"
+    >
       <h2 className="mb-1 font-medium">{t('settings.invitations')}</h2>
       <p className="mb-3 text-sm text-muted">{t('settings.invitationsHint')}</p>
 
@@ -528,7 +576,10 @@ function WebhooksSection() {
   };
 
   return (
-    <section className="mt-8 rounded-xl border border-border bg-surface p-5">
+    <section
+      id="webhooks"
+      className="mb-8 scroll-mt-6 rounded-xl border border-border bg-surface p-5"
+    >
       <h2 className="mb-1 font-medium">{t('settings.webhooks')}</h2>
       <p className="mb-3 text-sm text-muted">{t('settings.webhooksHint')}</p>
 

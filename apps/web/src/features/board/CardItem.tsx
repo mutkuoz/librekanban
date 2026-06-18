@@ -59,7 +59,8 @@ export function CardItem({
       {...listeners}
       onClick={onClick}
       className={cn(
-        'w-full space-y-2 rounded-lg border border-border bg-surface-2 p-3 text-left shadow-sm transition-all hover:border-brand/50 hover:shadow-md active:cursor-grabbing',
+        // Only transition border/shadow — never `transform`, or dnd-kit drags lag.
+        'w-full space-y-2 rounded-lg border border-border bg-surface-2 p-3 text-left shadow-sm transition-[border-color,box-shadow] hover:border-brand/50 hover:shadow-md active:cursor-grabbing',
         isDragging && 'opacity-40',
       )}
     >

@@ -56,8 +56,8 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
   return (
     <Dialog.Root open onOpenChange={(o) => !o && onClose()}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 w-[92vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-surface p-5 shadow-2xl">
+        <Dialog.Overlay className="lk-overlay fixed inset-0 bg-black/60 backdrop-blur-sm" />
+        <Dialog.Content className="lk-content fixed left-1/2 top-1/2 w-[92vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-surface p-5 shadow-2xl">
           <div className="mb-4 flex items-center justify-between">
             <Dialog.Title className="font-semibold">{t('import.title')}</Dialog.Title>
             <Dialog.Close className="text-muted hover:text-text">

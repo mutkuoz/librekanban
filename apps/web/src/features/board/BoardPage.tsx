@@ -152,7 +152,7 @@ export function BoardPage({ boardId }: { boardId: string }) {
                   className="fixed inset-0 z-10 cursor-default"
                   onClick={() => setExportOpen(false)}
                 />
-                <div className="absolute right-0 z-20 mt-2 w-40 rounded-md border border-border bg-surface p-1 shadow-xl">
+                <div className="lk-pop absolute right-0 z-20 mt-2 w-40 rounded-md border border-border bg-surface p-1 shadow-xl">
                   <a
                     href={`/api/boards/${boardId}/export?format=json`}
                     onClick={() => setExportOpen(false)}

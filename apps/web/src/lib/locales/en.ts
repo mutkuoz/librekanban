@@ -148,6 +148,9 @@ export const en = {
   'settings.twoFactorStartError': 'Could not start two-factor setup',
   'settings.twoFactorDisableError': 'Could not disable two-factor',
   'settings.members': 'Members',
+  'settings.membersHint':
+    'Manage who belongs to this workspace and their permission level (owner / admin / member / viewer).',
+  'settings.jumpTo': 'Jump to',
   'settings.you': ' (you)',
   'settings.removeMember': 'Remove member',
   'settings.removeConfirm': 'Remove {name} from this workspace?',

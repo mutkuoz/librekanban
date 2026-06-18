@@ -150,6 +150,9 @@ export const tr: Record<TranslationKey, string> = {
   'settings.twoFactorStartError': 'İki adımlı doğrulama başlatılamadı',
   'settings.twoFactorDisableError': 'İki adımlı doğrulama kapatılamadı',
   'settings.members': 'Üyeler',
+  'settings.membersHint':
+    'Bu çalışma alanına kimlerin dahil olduğunu ve yetki düzeylerini (sahip / yönetici / üye / izleyici) yönet.',
+  'settings.jumpTo': 'Şuraya git',
   'settings.you': ' (sen)',
   'settings.removeMember': 'Üyeyi çıkar',
   'settings.removeConfirm': '{name} bu çalışma alanından çıkarılsın mı?',

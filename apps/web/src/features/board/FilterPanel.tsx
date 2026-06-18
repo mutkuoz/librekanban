@@ -91,7 +91,7 @@ export function FilterPanel({
             className="fixed inset-0 z-10 cursor-default"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute right-0 z-20 mt-2 w-72 space-y-3 rounded-md border border-border bg-surface p-3 shadow-xl">
+          <div className="lk-pop absolute right-0 z-20 mt-2 w-72 space-y-3 rounded-md border border-border bg-surface p-3 shadow-xl">
             <div>
               <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">
                 {t('filter.sortBy')}

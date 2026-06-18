@@ -170,6 +170,16 @@ export function useDeleteColumn(boardId: string) {
   });
 }
 
+export function useMoveColumn(boardId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { columnId: string; input: Parameters<typeof api.moveColumn>[1] }) =>
+      api.moveColumn(v.columnId, v.input),
+    // Resync on settle so the board reflects the server's fractional ordering.
+    onSettled: () => invalidateBoard(qc, boardId),
+  });
+}
+
 export function useCustomFieldAdmin(boardId: string) {
   const qc = useQueryClient();
   const invalidate = () => invalidateBoard(qc, boardId);

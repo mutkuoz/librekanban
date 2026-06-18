@@ -62,3 +62,82 @@ body {
   scrollbar-width: thin;
   scrollbar-color: var(--color-border) transparent;
 }
+
+/* ── Motion ──────────────────────────────────────────────────────────────
+   Dialog (Radix data-state) + popover entrance animations. Gated on
+   prefers-reduced-motion so we never animate for users who opt out. */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes lk-overlay-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes lk-overlay-out {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes lk-content-in {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -48%) scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+  }
+  @keyframes lk-content-out {
+    from {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: translate(-50%, -48%) scale(0.97);
+    }
+  }
+  @keyframes lk-pop-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  @keyframes lk-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .lk-overlay[data-state="open"] {
+    animation: lk-overlay-in 140ms ease-out;
+  }
+  .lk-overlay[data-state="closed"] {
+    animation: lk-overlay-out 120ms ease-in;
+  }
+  .lk-content[data-state="open"] {
+    animation: lk-content-in 170ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .lk-content[data-state="closed"] {
+    animation: lk-content-out 120ms ease-in;
+  }
+  .lk-pop {
+    animation: lk-pop-in 120ms ease-out;
+  }
+  .lk-fade {
+    animation: lk-fade-in 200ms ease-out;
+  }
+}

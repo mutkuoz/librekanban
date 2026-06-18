@@ -46,7 +46,7 @@ export function SavedViews({
             className="fixed inset-0 z-10 cursor-default"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute right-0 z-20 mt-2 w-60 rounded-md border border-border bg-surface p-1 shadow-xl">
+          <div className="lk-pop absolute right-0 z-20 mt-2 w-60 rounded-md border border-border bg-surface p-1 shadow-xl">
             {(views ?? []).map((v) => (
               <div key={v.id} className="group flex items-center gap-1 rounded hover:bg-surface-2">
                 <button
