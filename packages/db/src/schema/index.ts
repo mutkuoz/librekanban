@@ -7,6 +7,7 @@ import { workspaceMembers, workspaces } from './workspace';
 export * from './auth';
 export * from './workspace';
 export * from './board';
+export * from './board-view';
 export * from './card';
 export * from './activity';
 export * from './notification';

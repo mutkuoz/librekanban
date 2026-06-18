@@ -10,6 +10,7 @@ import { CardModal } from './CardModal';
 import { CustomFieldsDialog } from './CustomFieldsDialog';
 import { FilterPanel } from './FilterPanel';
 import { ListView } from './ListView';
+import { SavedViews } from './SavedViews';
 import { type BoardFilter, EMPTY_FILTER } from './filter';
 
 function Avatars({ users }: { users: Presence['users'] }) {
@@ -118,6 +119,15 @@ export function BoardPage({ boardId }: { boardId: string }) {
             setSort={setSort}
             customFields={data.customFields}
             members={memberList}
+          />
+          <SavedViews
+            boardId={boardId}
+            filter={filter}
+            sort={sort}
+            onApply={(f, s) => {
+              setFilter(f);
+              setSort(s);
+            }}
           />
           <div className="relative">
             <button

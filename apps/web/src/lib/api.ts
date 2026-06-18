@@ -13,6 +13,7 @@ import type {
   CreateCustomFieldInput,
   CreateInvitationInput,
   CreateLabelInput,
+  CreateSavedViewInput,
   CreateWebhookInput,
   CreatedToken,
   CreatedWebhook,
@@ -22,6 +23,7 @@ import type {
   MoveCardInput,
   MoveColumnInput,
   Notification,
+  SavedView,
   UpdateCardInput,
   UpdateColumnInput,
   Webhook,
@@ -122,6 +124,11 @@ export const api = {
   listBoards: () => req<Board[]>('GET', '/boards'),
   createBoard: (input: CreateBoardInput) => req<Board>('POST', '/boards', input),
   getBoard: (boardId: string) => req<BoardDetail>('GET', `/boards/${boardId}`),
+
+  listSavedViews: (boardId: string) => req<SavedView[]>('GET', `/boards/${boardId}/views`),
+  createSavedView: (boardId: string, input: CreateSavedViewInput) =>
+    req<SavedView>('POST', `/boards/${boardId}/views`, input),
+  deleteSavedView: (id: string) => req<{ ok: boolean }>('DELETE', `/views/${id}`),
 
   createColumn: (boardId: string, input: CreateColumnInput) =>
     req<Column>('POST', `/boards/${boardId}/columns`, input),

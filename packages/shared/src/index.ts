@@ -7,6 +7,7 @@ export * from './schemas/column';
 export * from './schemas/card';
 export * from './schemas/card-detail';
 export * from './schemas/board-view';
+export * from './schemas/saved-view';
 export * from './schemas/label';
 export * from './schemas/attachment';
 export * from './schemas/comment';

@@ -14,6 +14,7 @@ import { labelRoutes } from './labels';
 import { meRoutes } from './me';
 import { memberRoutes } from './members';
 import { notificationRoutes } from './notifications';
+import { savedViewRoutes } from './saved-views';
 import { tokenRoutes } from './tokens';
 import { webhookRoutes } from './webhooks';
 
@@ -26,6 +27,7 @@ export function createApiRoutes() {
   api.route('/', invitationRoutes);
   api.route('/', notificationRoutes);
   api.route('/', boardRoutes);
+  api.route('/', savedViewRoutes);
   api.route('/', columnRoutes);
   api.route('/', cardRoutes);
   api.route('/', labelRoutes);

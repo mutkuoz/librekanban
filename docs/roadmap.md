@@ -43,8 +43,10 @@ dependencies** — blocked-by / blocking links with cycle prevention, a "blocked
 chip on the board (cleared once blockers complete), and a card-modal editor;
 **advanced filtering + sort** — filter cards by priority, due-date state, and
 custom-field value (on top of text/label/assignee), plus sort by
-priority/due/created/title, applied across board/list/calendar.
-**Remaining:** saved views, OIDC/SSO + 2FA/passkeys, theming/white-label, i18n.
+priority/due/created/title, applied across board/list/calendar; **saved views**
+— named, board-scoped filter+sort presets, persisted server-side and shared with
+all board members (creator/admin can delete).
+**Remaining:** OIDC/SSO + 2FA/passkeys, theming/white-label, i18n.
 
 ### M5 — Polish & ops (in progress)
 **Done:** importers — **Kanboard/CSV** + **Trello JSON** (upload → new board);

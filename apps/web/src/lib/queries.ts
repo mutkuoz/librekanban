@@ -65,6 +65,26 @@ export function useCreateColumn(boardId: string) {
   });
 }
 
+export function useSavedViews(boardId: string) {
+  return useQuery({ queryKey: ['views', boardId], queryFn: () => api.listSavedViews(boardId) });
+}
+
+export function useSavedViewActions(boardId: string) {
+  const qc = useQueryClient();
+  const invalidate = () => qc.invalidateQueries({ queryKey: ['views', boardId] });
+  return {
+    create: useMutation({
+      mutationFn: (input: Parameters<typeof api.createSavedView>[1]) =>
+        api.createSavedView(boardId, input),
+      onSuccess: invalidate,
+    }),
+    remove: useMutation({
+      mutationFn: (id: string) => api.deleteSavedView(id),
+      onSuccess: invalidate,
+    }),
+  };
+}
+
 export function useMembers() {
   return useQuery({ queryKey: ['members'], queryFn: api.members });
 }
