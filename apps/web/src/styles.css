@@ -3,7 +3,36 @@
 /* Enable class-based dark mode (the <html> element carries `.dark`). */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Token defaults (also generate the utilities, e.g. `bg-bg`, `text-text`). */
 @theme {
+  --color-bg: oklch(0.16 0.01 260);
+  --color-surface: oklch(0.21 0.012 260);
+  --color-surface-2: oklch(0.25 0.014 260);
+  --color-border: oklch(0.3 0.015 260);
+  --color-text: oklch(0.97 0.005 260);
+  --color-muted: oklch(0.7 0.012 260);
+  --color-brand: oklch(0.62 0.19 264);
+  --color-brand-fg: oklch(0.98 0.01 264);
+}
+
+/*
+ * Runtime palettes. `:root` is the light theme; `.dark` (toggled on <html> by
+ * lib/theme.ts) is the dark theme. Same token names, so every `bg-*`/`text-*`
+ * utility switches automatically. `--color-brand` may be further overridden
+ * inline by the accent picker. `.dark` comes last so it wins when present.
+ */
+:root {
+  --color-bg: oklch(0.99 0.003 260);
+  --color-surface: oklch(0.975 0.004 260);
+  --color-surface-2: oklch(0.94 0.006 260);
+  --color-border: oklch(0.88 0.008 260);
+  --color-text: oklch(0.22 0.01 260);
+  --color-muted: oklch(0.5 0.02 260);
+  --color-brand: oklch(0.55 0.2 264);
+  --color-brand-fg: oklch(0.98 0.01 264);
+}
+
+.dark {
   --color-bg: oklch(0.16 0.01 260);
   --color-surface: oklch(0.21 0.012 260);
   --color-surface-2: oklch(0.25 0.014 260);

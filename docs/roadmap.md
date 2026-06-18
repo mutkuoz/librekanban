@@ -45,8 +45,10 @@ chip on the board (cleared once blockers complete), and a card-modal editor;
 custom-field value (on top of text/label/assignee), plus sort by
 priority/due/created/title, applied across board/list/calendar; **saved views**
 — named, board-scoped filter+sort presets, persisted server-side and shared with
-all board members (creator/admin can delete).
-**Remaining:** OIDC/SSO + 2FA/passkeys, theming/white-label, i18n.
+all board members (creator/admin can delete); **theming** — Light/Dark/Auto
+modes + accent-color picker in Settings, persisted client-side and applied
+before first paint.
+**Remaining:** OIDC/SSO + 2FA/passkeys, i18n.
 
 ### M5 — Polish & ops (in progress)
 **Done:** importers — **Kanboard/CSV** + **Trello JSON** (upload → new board);

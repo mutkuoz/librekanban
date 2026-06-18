@@ -14,6 +14,15 @@ import {
   useWebhooks,
 } from '@/lib/queries';
 import {
+  ACCENTS,
+  type ThemeMode,
+  getAccent,
+  getThemeMode,
+  setAccent,
+  setThemeMode,
+} from '@/lib/theme';
+import { cn } from '@/lib/utils';
+import {
   type CreatedWebhook,
   type Invitation,
   WORKSPACE_ROLES,
@@ -66,6 +75,8 @@ export function SettingsPage() {
           />
         </label>
       </section>
+
+      <AppearanceSection />
 
       {canManageMembers && (
         <>
@@ -139,6 +150,64 @@ export function SettingsPage() {
 
       {canManageWebhooks && <WebhooksSection />}
     </div>
+  );
+}
+
+const THEME_MODES: ThemeMode[] = ['light', 'dark', 'auto'];
+
+function AppearanceSection() {
+  const [mode, setMode] = useState<ThemeMode>(getThemeMode);
+  const [accent, setAccentState] = useState<string>(getAccent);
+
+  return (
+    <section className="mb-8 rounded-xl border border-border bg-surface p-5">
+      <h2 className="mb-3 font-medium">Appearance</h2>
+
+      <div className="mb-4 flex items-center justify-between gap-2 text-sm">
+        <span>Theme</span>
+        <div className="flex rounded-md border border-border p-0.5">
+          {THEME_MODES.map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => {
+                setThemeMode(m);
+                setMode(m);
+              }}
+              className={cn(
+                'rounded px-2.5 py-1 capitalize',
+                mode === m ? 'bg-surface-2 text-text' : 'text-muted hover:text-text',
+              )}
+            >
+              {m}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between gap-2 text-sm">
+        <span>Accent</span>
+        <div className="flex gap-1.5">
+          {Object.keys(ACCENTS).map((name) => (
+            <button
+              key={name}
+              type="button"
+              title={name}
+              aria-label={`Accent ${name}`}
+              onClick={() => {
+                setAccent(name);
+                setAccentState(name);
+              }}
+              className={cn(
+                'size-6 rounded-full border-2',
+                accent === name ? 'border-text' : 'border-border',
+              )}
+              style={{ background: ACCENTS[name] ?? 'var(--color-brand)' }}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
