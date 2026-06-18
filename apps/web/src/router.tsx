@@ -1,7 +1,7 @@
 import { createRootRoute, createRoute, createRouter } from '@tanstack/react-router';
 import { AcceptInvitePage } from './components/AcceptInvitePage';
 import { AppShell } from './components/AppShell';
-import { BoardsListPage } from './components/BoardsListPage';
+import { HomePage } from './components/HomePage';
 import { SettingsPage } from './components/SettingsPage';
 import { BoardPage } from './features/board/BoardPage';
 
@@ -10,7 +10,7 @@ const rootRoute = createRootRoute({ component: AppShell });
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-  component: BoardsListPage,
+  component: HomePage,
 });
 
 const settingsRoute = createRoute({

@@ -33,6 +33,7 @@ export const tr: Record<TranslationKey, string> = {
   'auth.invalidCode': 'Geçersiz kod. Tekrar dene.',
 
   'nav.settings': 'Ayarlar',
+  'nav.boards': 'Panolar',
   'nav.signOut': 'Çıkış yap',
   'nav.switchWorkspace': 'Çalışma alanını değiştir',
   'nav.notifications': 'Bildirimler',

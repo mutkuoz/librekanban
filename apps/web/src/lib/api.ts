@@ -66,6 +66,21 @@ export function getActiveWorkspace(): string | null {
   return activeWs;
 }
 
+// Remember the last board the user opened so login can drop them back into it.
+const LAST_BOARD_KEY = 'lk_last_board';
+export function setLastBoard(id: string): void {
+  try {
+    localStorage.setItem(LAST_BOARD_KEY, id);
+  } catch {}
+}
+export function getLastBoard(): string | null {
+  try {
+    return localStorage.getItem(LAST_BOARD_KEY);
+  } catch {
+    return null;
+  }
+}
+
 function buildHeaders(json: boolean): Record<string, string> {
   const h: Record<string, string> = {};
   if (json) h['content-type'] = 'application/json';

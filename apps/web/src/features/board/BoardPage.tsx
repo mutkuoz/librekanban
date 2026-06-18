@@ -1,16 +1,10 @@
+import { setLastBoard } from '@/lib/api';
 import { type TranslationKey, useT } from '@/lib/i18n';
 import { useBoard, useBoardRealtime, useMembers } from '@/lib/queries';
 import { cn } from '@/lib/utils';
 import { type Presence, type SortKey, can } from '@librekanban/shared';
-import { Link } from '@tanstack/react-router';
 import { Download, Search, SlidersHorizontal } from 'lucide-react';
-import { useState } from 'react';
-
-const VIEW_LABEL: Record<'board' | 'list' | 'calendar', TranslationKey> = {
-  board: 'board.view.board',
-  list: 'board.view.list',
-  calendar: 'board.view.calendar',
-};
+import { useEffect, useState } from 'react';
 import { BoardView } from './BoardView';
 import { CalendarView } from './CalendarView';
 import { CardModal } from './CardModal';
@@ -19,6 +13,12 @@ import { FilterPanel } from './FilterPanel';
 import { ListView } from './ListView';
 import { SavedViews } from './SavedViews';
 import { type BoardFilter, EMPTY_FILTER } from './filter';
+
+const VIEW_LABEL: Record<'board' | 'list' | 'calendar', TranslationKey> = {
+  board: 'board.view.board',
+  list: 'board.view.list',
+  calendar: 'board.view.calendar',
+};
 
 function Avatars({ users }: { users: Presence['users'] }) {
   if (users.length === 0) return null;
@@ -49,6 +49,9 @@ export function BoardPage({ boardId }: { boardId: string }) {
   const [filter, setFilter] = useState<BoardFilter>(EMPTY_FILTER);
   const [sort, setSort] = useState<SortKey>('manual');
 
+  // Remember this as the last-opened board so login returns here.
+  useEffect(() => setLastBoard(boardId), [boardId]);
+
   if (isLoading)
     return <div className="grid h-full place-items-center text-muted">{t('board.loading')}</div>;
   if (error || !data)
@@ -63,9 +66,6 @@ export function BoardPage({ boardId }: { boardId: string }) {
     <div className="flex h-full flex-col">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
         <div className="flex items-center gap-3">
-          <Link to="/" className="text-sm text-muted hover:text-text">
-            {t('board.back')}
-          </Link>
           <h1 className="font-semibold">{data.board.name}</h1>
           <div className="flex rounded-md border border-border bg-surface p-0.5 text-sm">
             {(['board', 'list', 'calendar'] as const).map((v) => (

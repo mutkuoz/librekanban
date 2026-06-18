@@ -31,6 +31,7 @@ export const en = {
   'auth.invalidCode': 'Invalid code. Try again.',
 
   'nav.settings': 'Settings',
+  'nav.boards': 'Boards',
   'nav.signOut': 'Sign out',
   'nav.switchWorkspace': 'Switch workspace',
   'nav.notifications': 'Notifications',

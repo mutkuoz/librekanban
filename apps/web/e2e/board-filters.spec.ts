@@ -8,7 +8,7 @@ async function signUp(page: Page): Promise<void> {
   await page.getByPlaceholder('Email').fill(email);
   await page.getByPlaceholder('Password').fill('supersecret123');
   await page.getByRole('button', { name: 'Create account' }).click();
-  await expect(page.getByRole('heading', { name: 'Your boards' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Welcome to librekanban' })).toBeVisible();
 }
 
 const column = (page: Page, name: string) =>

@@ -8,7 +8,7 @@ async function signUp(page: Page): Promise<void> {
   await page.getByPlaceholder('Email').fill(email);
   await page.getByPlaceholder('Password').fill('supersecret123');
   await page.getByRole('button', { name: 'Create account' }).click();
-  await expect(page.getByRole('heading', { name: 'Your boards' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Welcome to librekanban' })).toBeVisible();
 }
 
 test('switch the interface to Turkish, persisted across reload', async ({ page }) => {
@@ -22,12 +22,10 @@ test('switch the interface to Turkish, persisted across reload', async ({ page }
   // Chrome is now Turkish.
   await expect(page.getByRole('heading', { name: 'Ayarlar' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Görünüm' })).toBeVisible();
-
-  // Boards list is translated too.
-  await page.getByRole('link', { name: '← Panolar' }).click();
-  await expect(page.getByRole('heading', { name: 'Panolarınız' })).toBeVisible();
+  // The sidebar boards label is translated too.
+  await expect(page.getByText('Panolar', { exact: true })).toBeVisible();
 
   // The choice persists across a reload.
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Panolarınız' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ayarlar' })).toBeVisible();
 });

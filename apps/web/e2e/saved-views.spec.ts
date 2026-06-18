@@ -8,7 +8,7 @@ async function signUp(page: Page): Promise<void> {
   await page.getByPlaceholder('Email').fill(email);
   await page.getByPlaceholder('Password').fill('supersecret123');
   await page.getByRole('button', { name: 'Create account' }).click();
-  await expect(page.getByRole('heading', { name: 'Your boards' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Welcome to librekanban' })).toBeVisible();
 }
 
 const welcomeCard = (page: Page) =>
@@ -23,7 +23,8 @@ test('save a filter as a view, then re-apply it after reload', async ({ page }) 
   // Apply an urgent-only filter (no seeded card is urgent → hides them all).
   await page.getByRole('button', { name: 'Filters' }).click();
   await page.getByRole('button', { name: 'urgent', exact: true }).click();
-  await page.getByRole('button', { name: 'Close filters' }).click();
+  // Close via the overlay's top-left corner (the panel sits top-right).
+  await page.getByRole('button', { name: 'Close filters' }).click({ position: { x: 5, y: 5 } });
   await expect(welcomeCard(page)).toHaveCount(0);
 
   // Save it as a named view.
@@ -31,7 +32,7 @@ test('save a filter as a view, then re-apply it after reload', async ({ page }) 
   await page.getByRole('button', { name: 'Views' }).click();
   await page.getByRole('button', { name: /Save current view/ }).click();
   await expect(page.getByRole('button', { name: 'Urgent only' })).toBeVisible();
-  await page.getByRole('button', { name: 'Close views' }).click();
+  await page.getByRole('button', { name: 'Close views' }).click({ position: { x: 5, y: 5 } });
 
   // Reload (filter state is lost) — the seeded card returns.
   await page.reload();

@@ -55,7 +55,10 @@ and a language switcher in Settings (browser-default, persisted).
 **Remaining:** passkeys.
 
 ### M5 — Polish & ops (in progress)
-**Done:** importers — **Kanboard/CSV** + **Trello JSON** (upload → new board);
+**Done:** **sidebar app-shell** (boards/admin/settings in a left rail; login
+lands directly in your last board) with **column + card drag-and-drop**,
+entrance/drag **animations** (reduced-motion aware), and centered columns;
+importers — **Kanboard/CSV** + **Trello JSON** (upload → new board);
 **export** — board to JSON or flat-cards CSV (download); **Playwright E2E**
 covering sign-up → seeded board → add card → **drag-and-drop** → card modal /
 labels, plus card dependencies, advanced filtering, saved views, theming, the
