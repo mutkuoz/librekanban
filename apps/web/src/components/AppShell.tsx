@@ -1,15 +1,31 @@
 import { useT } from '@/lib/i18n';
 import { useMe } from '@/lib/queries';
+import { cn } from '@/lib/utils';
 import { Outlet } from '@tanstack/react-router';
 import { Loader2, Menu, SquareKanban } from 'lucide-react';
 import { useState } from 'react';
 import { AuthPage } from './AuthPage';
 import { Sidebar } from './Sidebar';
 
+const COLLAPSE_KEY = 'lk_sidebar_collapsed';
+
 export function AppShell() {
   const t = useT();
   const { data: me, isLoading, isError } = useMe();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [collapsed, setCollapsedState] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(COLLAPSE_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
+  const setCollapsed = (v: boolean) => {
+    setCollapsedState(v);
+    try {
+      localStorage.setItem(COLLAPSE_KEY, v ? '1' : '0');
+    } catch {}
+  };
 
   if (isLoading) {
     return (
@@ -23,13 +39,26 @@ export function AppShell() {
 
   return (
     <div className="flex h-full">
-      <Sidebar open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      <Sidebar
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        collapsed={collapsed}
+        onToggleCollapse={() => setCollapsed(!collapsed)}
+      />
       <div className="flex min-h-0 flex-1 flex-col">
-        {/* Mobile top bar (the sidebar is a drawer below md). */}
-        <div className="flex items-center gap-2 border-b border-border px-3 py-2 md:hidden">
+        {/* Top bar: always on mobile; on desktop only when the rail is collapsed. */}
+        <div
+          className={cn(
+            'flex items-center gap-2 border-b border-border px-3 py-2',
+            !collapsed && 'md:hidden',
+          )}
+        >
           <button
             type="button"
-            onClick={() => setDrawerOpen(true)}
+            onClick={() => {
+              setCollapsed(false);
+              setDrawerOpen(true);
+            }}
             aria-label={t('nav.menu')}
             className="grid size-9 place-items-center rounded-md text-muted hover:bg-surface-2 hover:text-text"
           >

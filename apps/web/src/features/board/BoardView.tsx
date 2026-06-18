@@ -11,13 +11,30 @@ import {
 import {
   DndContext,
   DragOverlay,
+  MeasuringStrategy,
   PointerSensor,
-  closestCorners,
+  pointerWithin,
+  rectIntersection,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core';
+import type {
+  CollisionDetection,
+  DragEndEvent,
+  DragOverEvent,
+  DragStartEvent,
+} from '@dnd-kit/core';
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from '@dnd-kit/sortable';
+
+/**
+ * Prefer the droppable the pointer is actually inside (so dragging over an empty
+ * column reliably targets that column, not an adjacent card's nearest corner);
+ * fall back to rect intersection when the pointer isn't over any droppable.
+ */
+const collisionDetection: CollisionDetection = (args) => {
+  const within = pointerWithin(args);
+  return within.length > 0 ? within : rectIntersection(args);
+};
 import type { BoardCard, SortKey, WorkspaceMember } from '@librekanban/shared';
 import { Plus } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -184,7 +201,8 @@ export function BoardView({
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCorners}
+      collisionDetection={collisionDetection}
+      measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
       onDragStart={onDragStart}
       onDragOver={onDragOver}
       onDragEnd={onDragEnd}

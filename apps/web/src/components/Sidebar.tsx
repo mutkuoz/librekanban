@@ -7,10 +7,20 @@ import { useBoards, useCreateBoard, useMe } from '@/lib/queries';
 import { cn } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link, useRouter, useRouterState } from '@tanstack/react-router';
-import { LogOut, Plus, Settings, SquareKanban, Upload } from 'lucide-react';
+import { LogOut, PanelLeftClose, Plus, Settings, SquareKanban, Upload } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function Sidebar({
+  open,
+  onClose,
+  collapsed,
+  onToggleCollapse,
+}: {
+  open: boolean;
+  onClose: () => void;
+  collapsed: boolean;
+  onToggleCollapse: () => void;
+}) {
   const t = useT();
   const { data: me } = useMe();
   const { data: boards } = useBoards();
@@ -74,8 +84,10 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
       )}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-40 flex w-64 shrink-0 flex-col border-r border-border bg-surface transition-transform md:relative md:z-auto md:w-60 md:translate-x-0',
+          'fixed inset-y-0 left-0 z-40 flex w-64 shrink-0 flex-col border-r border-border bg-surface transition-transform',
           open ? 'translate-x-0' : '-translate-x-full',
+          // On desktop: a static rail, or hidden when collapsed.
+          collapsed ? 'md:hidden' : 'md:relative md:z-auto md:w-60 md:translate-x-0',
         )}
       >
         <div className="flex items-center justify-between gap-2 p-3">
@@ -89,7 +101,17 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
             </span>
             librekanban
           </Link>
-          <NotificationBell />
+          <div className="flex items-center gap-0.5">
+            <NotificationBell />
+            <button
+              type="button"
+              onClick={onToggleCollapse}
+              title={t('nav.collapse')}
+              className="hidden size-8 place-items-center rounded-md text-muted hover:bg-surface-2 hover:text-text md:grid"
+            >
+              <PanelLeftClose className="size-4" />
+            </button>
+          </div>
         </div>
 
         {workspaces.length > 1 && (
