@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { api } from '@/lib/api';
+import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import * as Dialog from '@radix-ui/react-dialog';
 import { useQueryClient } from '@tanstack/react-query';
@@ -11,6 +12,7 @@ const inputCls =
   'w-full h-9 rounded-md border border-border bg-bg px-2 text-sm outline-none focus:ring-2 focus:ring-brand/60';
 
 export function ImportDialog({ onClose }: { onClose: () => void }) {
+  const t = useT();
   const qc = useQueryClient();
   const router = useRouter();
   const [source, setSource] = useState<'csv' | 'trello'>('csv');
@@ -32,7 +34,7 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
       onClose();
       router.navigate({ to: '/b/$boardId', params: { boardId: res.boardId } });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Import failed');
+      setError(e instanceof Error ? e.message : t('import.failed'));
     } finally {
       setBusy(false);
     }
@@ -57,7 +59,7 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
         <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
         <Dialog.Content className="fixed left-1/2 top-1/2 w-[92vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-surface p-5 shadow-2xl">
           <div className="mb-4 flex items-center justify-between">
-            <Dialog.Title className="font-semibold">Import a board</Dialog.Title>
+            <Dialog.Title className="font-semibold">{t('import.title')}</Dialog.Title>
             <Dialog.Close className="text-muted hover:text-text">
               <X className="size-5" />
             </Dialog.Close>
@@ -65,15 +67,15 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
 
           <div className="space-y-3">
             <div className="flex gap-2">
-              {tab('csv', 'CSV (Kanboard/generic)')}
-              {tab('trello', 'Trello JSON')}
+              {tab('csv', t('import.csvTab'))}
+              {tab('trello', t('import.trelloTab'))}
             </div>
 
             {source === 'csv' && (
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="New board name"
+                placeholder={t('import.newBoardName')}
                 className={inputCls}
               />
             )}
@@ -84,15 +86,13 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
               className="block w-full text-sm text-muted file:mr-3 file:rounded-md file:border-0 file:bg-surface-2 file:px-3 file:py-1.5 file:text-text"
             />
             <p className="text-xs text-muted">
-              {source === 'csv'
-                ? 'Kanboard: Project → Exports → Tasks (CSV). Cards group by the "Column" field.'
-                : 'Trello: Board menu → Print, export, and share → Export as JSON.'}
+              {source === 'csv' ? t('import.csvHint') : t('import.trelloHint')}
             </p>
             {error && <div className="text-sm text-red-400">{error}</div>}
 
             <Button className="w-full" onClick={submit} disabled={!file || busy}>
               {busy ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
-              Import
+              {t('boards.import')}
             </Button>
           </div>
         </Dialog.Content>

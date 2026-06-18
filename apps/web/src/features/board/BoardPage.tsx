@@ -1,9 +1,16 @@
+import { type TranslationKey, useT } from '@/lib/i18n';
 import { useBoard, useBoardRealtime, useMembers } from '@/lib/queries';
 import { cn } from '@/lib/utils';
 import { type Presence, type SortKey, can } from '@librekanban/shared';
 import { Link } from '@tanstack/react-router';
 import { Download, Search, SlidersHorizontal } from 'lucide-react';
 import { useState } from 'react';
+
+const VIEW_LABEL: Record<'board' | 'list' | 'calendar', TranslationKey> = {
+  board: 'board.view.board',
+  list: 'board.view.list',
+  calendar: 'board.view.calendar',
+};
 import { BoardView } from './BoardView';
 import { CalendarView } from './CalendarView';
 import { CardModal } from './CardModal';
@@ -31,6 +38,7 @@ function Avatars({ users }: { users: Presence['users'] }) {
 }
 
 export function BoardPage({ boardId }: { boardId: string }) {
+  const t = useT();
   const { data, isLoading, error } = useBoard(boardId);
   const { data: members } = useMembers();
   const presence = useBoardRealtime(boardId);
@@ -42,11 +50,9 @@ export function BoardPage({ boardId }: { boardId: string }) {
   const [sort, setSort] = useState<SortKey>('manual');
 
   if (isLoading)
-    return <div className="grid h-full place-items-center text-muted">Loading board…</div>;
+    return <div className="grid h-full place-items-center text-muted">{t('board.loading')}</div>;
   if (error || !data)
-    return (
-      <div className="grid h-full place-items-center text-muted">Couldn't load this board.</div>
-    );
+    return <div className="grid h-full place-items-center text-muted">{t('board.loadError')}</div>;
 
   const memberList = members ?? [];
   const canEdit = can(data.role, 'card:create');
@@ -58,7 +64,7 @@ export function BoardPage({ boardId }: { boardId: string }) {
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
         <div className="flex items-center gap-3">
           <Link to="/" className="text-sm text-muted hover:text-text">
-            ← Boards
+            {t('board.back')}
           </Link>
           <h1 className="font-semibold">{data.board.name}</h1>
           <div className="flex rounded-md border border-border bg-surface p-0.5 text-sm">
@@ -72,7 +78,7 @@ export function BoardPage({ boardId }: { boardId: string }) {
                   view === v ? 'bg-surface-2 text-text' : 'text-muted hover:text-text',
                 )}
               >
-                {v}
+                {t(VIEW_LABEL[v])}
               </button>
             ))}
           </div>
@@ -84,7 +90,7 @@ export function BoardPage({ boardId }: { boardId: string }) {
             <input
               value={filter.text}
               onChange={(e) => setFilter((f) => ({ ...f, text: e.target.value }))}
-              placeholder="Search cards"
+              placeholder={t('board.search')}
               className="h-8 w-36 bg-transparent text-sm outline-none"
             />
           </div>
@@ -93,7 +99,7 @@ export function BoardPage({ boardId }: { boardId: string }) {
             onChange={(e) => setFilter((f) => ({ ...f, labelId: e.target.value || null }))}
             className={selectCls}
           >
-            <option value="">All labels</option>
+            <option value="">{t('board.allLabels')}</option>
             {data.labels.map((l) => (
               <option key={l.id} value={l.id}>
                 {l.name}
@@ -105,7 +111,7 @@ export function BoardPage({ boardId }: { boardId: string }) {
             onChange={(e) => setFilter((f) => ({ ...f, assigneeId: e.target.value || null }))}
             className={selectCls}
           >
-            <option value="">Anyone</option>
+            <option value="">{t('board.anyone')}</option>
             {memberList.map((m) => (
               <option key={m.id} value={m.id}>
                 {m.name}
@@ -133,7 +139,7 @@ export function BoardPage({ boardId }: { boardId: string }) {
             <button
               type="button"
               onClick={() => setExportOpen((o) => !o)}
-              title="Export"
+              title={t('board.export')}
               className="grid size-8 place-items-center rounded-md border border-border bg-surface text-muted hover:text-text"
             >
               <Download className="size-4" />
@@ -152,14 +158,14 @@ export function BoardPage({ boardId }: { boardId: string }) {
                     onClick={() => setExportOpen(false)}
                     className="block rounded px-2 py-1.5 text-sm hover:bg-surface-2"
                   >
-                    Export JSON
+                    {t('board.exportJson')}
                   </a>
                   <a
                     href={`/api/boards/${boardId}/export?format=csv`}
                     onClick={() => setExportOpen(false)}
                     className="block rounded px-2 py-1.5 text-sm hover:bg-surface-2"
                   >
-                    Export CSV
+                    {t('board.exportCsv')}
                   </a>
                 </div>
               </>
@@ -169,7 +175,7 @@ export function BoardPage({ boardId }: { boardId: string }) {
             <button
               type="button"
               onClick={() => setFieldsOpen(true)}
-              title="Custom fields"
+              title={t('board.customFields')}
               className="grid size-8 place-items-center rounded-md border border-border bg-surface text-muted hover:text-text"
             >
               <SlidersHorizontal className="size-4" />

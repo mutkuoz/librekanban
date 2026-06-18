@@ -1,3 +1,4 @@
+import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -33,6 +34,7 @@ export function CardItem({
   canEdit: boolean;
   onClick: () => void;
 }) {
+  const t = useT();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: card.id,
     data: { type: 'card', columnId: card.columnId },
@@ -117,7 +119,7 @@ export function CardItem({
             </span>
           )}
           {card.blockedCount > 0 && (
-            <span className="flex items-center gap-1 text-amber-400" title="Blocked by other cards">
+            <span className="flex items-center gap-1 text-amber-400" title={t('card.blockedTitle')}>
               <Ban className="size-3" />
               {card.blockedCount}
             </span>

@@ -49,8 +49,10 @@ all board members (creator/admin can delete); **theming** — Light/Dark/Auto
 modes + accent-color picker in Settings, persisted client-side and applied
 before first paint; **SSO/OIDC login** (generic OIDC via discovery, surfaced on
 the sign-in page when configured) and **TOTP 2FA** (authenticator enrollment
-with backup codes, a sign-in challenge step, enable/disable in Settings).
-**Remaining:** passkeys, i18n.
+with backup codes, a sign-in challenge step, enable/disable in Settings);
+**i18n** — full English + Turkish UI with a lightweight typed translation layer
+and a language switcher in Settings (browser-default, persisted).
+**Remaining:** passkeys.
 
 ### M5 — Polish & ops (in progress)
 **Done:** importers — **Kanboard/CSV** + **Trello JSON** (upload → new board);

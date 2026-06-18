@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { getActiveWorkspace, setActiveWorkspace } from '@/lib/api';
 import { signOut } from '@/lib/auth';
+import { useT } from '@/lib/i18n';
 import { useMe } from '@/lib/queries';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link, Outlet, useRouter } from '@tanstack/react-router';
@@ -10,6 +11,7 @@ import { AuthPage } from './AuthPage';
 import { NotificationBell } from './NotificationBell';
 
 export function AppShell() {
+  const t = useT();
   const { data: me, isLoading, isError } = useMe();
   const qc = useQueryClient();
   const router = useRouter();
@@ -65,7 +67,7 @@ export function AppShell() {
             <select
               value={activeWs ?? workspaces[0]?.id ?? ''}
               onChange={(e) => onSwitchWorkspace(e.target.value)}
-              title="Switch workspace"
+              title={t('nav.switchWorkspace')}
               className="h-8 rounded-md border border-border bg-bg px-2 text-sm text-muted outline-none hover:text-text focus:ring-2 focus:ring-brand/60"
             >
               {workspaces.map((w) => (
@@ -80,13 +82,13 @@ export function AppShell() {
           <NotificationBell />
           <Link
             to="/settings"
-            title="Settings"
+            title={t('nav.settings')}
             className="grid size-9 place-items-center rounded-md text-muted hover:bg-surface-2 hover:text-text"
           >
             <Settings className="size-4" />
           </Link>
           <span className="text-muted">{me.user.name}</span>
-          <Button variant="ghost" size="icon" onClick={onSignOut} title="Sign out">
+          <Button variant="ghost" size="icon" onClick={onSignOut} title={t('nav.signOut')}>
             <LogOut className="size-4" />
           </Button>
         </div>

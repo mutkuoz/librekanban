@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { getActiveWorkspace } from '@/lib/api';
 import { type TwoFactorSetup, disable2FA, enable2FA, verifyTotp } from '@/lib/auth';
+import { LANGUAGES, type Lang, type TranslationKey, useI18n, useT } from '@/lib/i18n';
 import {
   useInvitationActions,
   useInvitations,
@@ -36,6 +37,7 @@ import { Copy, Loader2, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 export function SettingsPage() {
+  const t = useT();
   const { data: me } = useMe();
   const { data: prefs } = useNotificationPreferences();
   const setPrefs = useSetNotificationPreferences();
@@ -62,14 +64,14 @@ export function SettingsPage() {
   return (
     <div className="mx-auto max-w-2xl p-6">
       <Link to="/" className="text-sm text-muted hover:text-text">
-        ← Boards
+        {t('board.back')}
       </Link>
-      <h1 className="mt-2 mb-6 text-xl font-semibold">Settings</h1>
+      <h1 className="mt-2 mb-6 text-xl font-semibold">{t('settings.title')}</h1>
 
       <section className="mb-8 rounded-xl border border-border bg-surface p-5">
-        <h2 className="mb-3 font-medium">Notifications</h2>
+        <h2 className="mb-3 font-medium">{t('settings.notifications')}</h2>
         <label className="flex items-center justify-between gap-2 text-sm">
-          Email me about activity (assignments, comments, mentions)
+          {t('settings.emailActivity')}
           <input
             type="checkbox"
             checked={prefs?.emailEnabled ?? true}
@@ -90,21 +92,18 @@ export function SettingsPage() {
       )}
 
       <section className="rounded-xl border border-border bg-surface p-5">
-        <h2 className="mb-1 font-medium">API tokens</h2>
-        <p className="mb-3 text-sm text-muted">
-          Use a token as <code className="text-xs">Authorization: Bearer …</code> to call the REST
-          API.
-        </p>
+        <h2 className="mb-1 font-medium">{t('settings.apiTokens')}</h2>
+        <p className="mb-3 text-sm text-muted">{t('settings.tokensHint')}</p>
 
         {newToken && (
           <div className="mb-3 rounded-md border border-brand/50 bg-brand/10 p-3 text-sm">
-            <div className="mb-1 font-medium">Copy your token now — it won't be shown again:</div>
+            <div className="mb-1 font-medium">{t('settings.tokenOnce')}</div>
             <div className="flex items-center gap-2">
               <code className="flex-1 break-all rounded bg-bg px-2 py-1 text-xs">{newToken}</code>
               <button
                 type="button"
                 onClick={() => navigator.clipboard?.writeText(newToken)}
-                title="Copy"
+                title={t('common.copy')}
                 className="text-muted hover:text-text"
               >
                 <Copy className="size-4" />
@@ -118,31 +117,31 @@ export function SettingsPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addToken()}
-            placeholder="Token name (e.g. CI)"
+            placeholder={t('settings.tokenName')}
             className="h-9 flex-1 rounded-md border border-border bg-bg px-2 text-sm outline-none focus:ring-2 focus:ring-brand/60"
           />
           <Button onClick={addToken} disabled={create.isPending}>
-            {create.isPending && <Loader2 className="size-4 animate-spin" />} Create
+            {create.isPending && <Loader2 className="size-4 animate-spin" />} {t('common.create')}
           </Button>
         </div>
 
         <div className="space-y-1.5">
           {(!tokens || tokens.length === 0) && (
-            <div className="text-sm text-muted">No tokens yet.</div>
+            <div className="text-sm text-muted">{t('settings.noTokens')}</div>
           )}
-          {tokens?.map((t) => (
-            <div key={t.id} className="group flex items-center gap-2 text-sm">
+          {tokens?.map((tok) => (
+            <div key={tok.id} className="group flex items-center gap-2 text-sm">
               <span className="flex-1">
-                {t.name} <code className="text-xs text-muted">{t.prefix}…</code>
+                {tok.name} <code className="text-xs text-muted">{tok.prefix}…</code>
               </span>
               <span className="text-xs text-muted">
-                {t.lastUsedAt
-                  ? `used ${new Date(t.lastUsedAt).toLocaleDateString()}`
-                  : 'never used'}
+                {tok.lastUsedAt
+                  ? t('settings.usedOn', { date: new Date(tok.lastUsedAt).toLocaleDateString() })
+                  : t('settings.neverUsed')}
               </span>
               <button
                 type="button"
-                onClick={() => revoke.mutate(t.id)}
+                onClick={() => revoke.mutate(tok.id)}
                 className="opacity-0 transition-opacity group-hover:opacity-100"
               >
                 <Trash2 className="size-3.5 text-muted hover:text-red-400" />
@@ -158,17 +157,24 @@ export function SettingsPage() {
 }
 
 const THEME_MODES: ThemeMode[] = ['light', 'dark', 'auto'];
+const THEME_LABEL: Record<ThemeMode, TranslationKey> = {
+  light: 'settings.themeLight',
+  dark: 'settings.themeDark',
+  auto: 'settings.themeAuto',
+};
 
 function AppearanceSection() {
+  const t = useT();
+  const { lang, setLang } = useI18n();
   const [mode, setMode] = useState<ThemeMode>(getThemeMode);
   const [accent, setAccentState] = useState<string>(getAccent);
 
   return (
     <section className="mb-8 rounded-xl border border-border bg-surface p-5">
-      <h2 className="mb-3 font-medium">Appearance</h2>
+      <h2 className="mb-3 font-medium">{t('settings.appearance')}</h2>
 
       <div className="mb-4 flex items-center justify-between gap-2 text-sm">
-        <span>Theme</span>
+        <span>{t('settings.theme')}</span>
         <div className="flex rounded-md border border-border p-0.5">
           {THEME_MODES.map((m) => (
             <button
@@ -179,35 +185,54 @@ function AppearanceSection() {
                 setMode(m);
               }}
               className={cn(
-                'rounded px-2.5 py-1 capitalize',
+                'rounded px-2.5 py-1',
                 mode === m ? 'bg-surface-2 text-text' : 'text-muted hover:text-text',
               )}
             >
-              {m}
+              {t(THEME_LABEL[m])}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-2 text-sm">
-        <span>Accent</span>
+      <div className="mb-4 flex items-center justify-between gap-2 text-sm">
+        <span>{t('settings.accent')}</span>
         <div className="flex gap-1.5">
-          {Object.keys(ACCENTS).map((name) => (
+          {Object.keys(ACCENTS).map((accentName) => (
             <button
-              key={name}
+              key={accentName}
               type="button"
-              title={name}
-              aria-label={`Accent ${name}`}
+              title={accentName}
+              aria-label={`Accent ${accentName}`}
               onClick={() => {
-                setAccent(name);
-                setAccentState(name);
+                setAccent(accentName);
+                setAccentState(accentName);
               }}
               className={cn(
                 'size-6 rounded-full border-2',
-                accent === name ? 'border-text' : 'border-border',
+                accent === accentName ? 'border-text' : 'border-border',
               )}
-              style={{ background: ACCENTS[name] ?? 'var(--color-brand)' }}
+              style={{ background: ACCENTS[accentName] ?? 'var(--color-brand)' }}
             />
+          ))}
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between gap-2 text-sm">
+        <span>{t('settings.language')}</span>
+        <div className="flex rounded-md border border-border p-0.5">
+          {(Object.entries(LANGUAGES) as [Lang, string][]).map(([code, label]) => (
+            <button
+              key={code}
+              type="button"
+              onClick={() => setLang(code)}
+              className={cn(
+                'rounded px-2.5 py-1',
+                lang === code ? 'bg-surface-2 text-text' : 'text-muted hover:text-text',
+              )}
+            >
+              {label}
+            </button>
           ))}
         </div>
       </div>
@@ -219,6 +244,7 @@ const fieldCls =
   'h-9 flex-1 rounded-md border border-border bg-bg px-2 text-sm outline-none focus:ring-2 focus:ring-brand/60';
 
 function SecuritySection({ enabled }: { enabled: boolean }) {
+  const t = useT();
   const qc = useQueryClient();
   const [password, setPassword] = useState('');
   const [setup, setSetup] = useState<TwoFactorSetup | null>(null);
@@ -243,49 +269,47 @@ function SecuritySection({ enabled }: { enabled: boolean }) {
     run(async () => {
       setSetup(await enable2FA(password));
       setPassword('');
-    }, 'Could not start two-factor setup');
+    }, t('settings.twoFactorStartError'));
   const confirm = () =>
     run(async () => {
       await verifyTotp(code.trim());
       setSetup(null);
       setCode('');
       await refreshMe();
-    }, 'Invalid code');
+    }, t('auth.invalidCode'));
   const disable = () =>
     run(async () => {
       await disable2FA(password);
       setPassword('');
       await refreshMe();
-    }, 'Could not disable two-factor');
+    }, t('settings.twoFactorDisableError'));
 
   return (
     <section className="mb-8 rounded-xl border border-border bg-surface p-5">
-      <h2 className="mb-1 font-medium">Security</h2>
-      <p className="mb-3 text-sm text-muted">
-        Two-factor authentication (TOTP) adds a code from your authenticator app at sign-in.
-      </p>
+      <h2 className="mb-1 font-medium">{t('settings.security')}</h2>
+      <p className="mb-3 text-sm text-muted">{t('settings.securityHint')}</p>
 
       {enabled ? (
         <div className="space-y-2">
-          <div className="text-sm text-emerald-400">Two-factor authentication is on.</div>
+          <div className="text-sm text-emerald-400">{t('settings.twoFactorOn')}</div>
           <div className="flex gap-2">
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Current password"
+              placeholder={t('settings.currentPassword')}
               className={fieldCls}
             />
             <Button variant="danger" onClick={disable} disabled={busy || !password}>
-              {busy && <Loader2 className="size-4 animate-spin" />} Disable
+              {busy && <Loader2 className="size-4 animate-spin" />} {t('common.disable')}
             </Button>
           </div>
         </div>
       ) : setup ? (
         <div className="space-y-2 text-sm">
-          <div>Add this to your authenticator app, then enter the 6-digit code:</div>
+          <div>{t('settings.twoFactorSetup')}</div>
           <code className="block break-all rounded bg-bg px-2 py-1 text-xs">{setup.totpURI}</code>
-          <div className="text-muted">Backup codes — save these somewhere safe:</div>
+          <div className="text-muted">{t('settings.backupCodes')}</div>
           <code className="block whitespace-pre-wrap rounded bg-bg px-2 py-1 text-xs">
             {setup.backupCodes.join('   ')}
           </code>
@@ -298,7 +322,7 @@ function SecuritySection({ enabled }: { enabled: boolean }) {
               className={fieldCls}
             />
             <Button onClick={confirm} disabled={busy || !code}>
-              {busy && <Loader2 className="size-4 animate-spin" />} Confirm
+              {busy && <Loader2 className="size-4 animate-spin" />} {t('common.confirm')}
             </Button>
           </div>
         </div>
@@ -308,11 +332,11 @@ function SecuritySection({ enabled }: { enabled: boolean }) {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Current password"
+            placeholder={t('settings.currentPassword')}
             className={fieldCls}
           />
           <Button onClick={begin} disabled={busy || !password}>
-            {busy && <Loader2 className="size-4 animate-spin" />} Enable
+            {busy && <Loader2 className="size-4 animate-spin" />} {t('common.enable')}
           </Button>
         </div>
       )}
@@ -329,22 +353,23 @@ function MembersSection({
   canSetRole: boolean;
   currentUserId: string;
 }) {
+  const t = useT();
   const { data: members } = useMembers();
   const { setRole, remove } = useMemberActions();
 
   const onRemove = (userId: string, name: string) => {
-    if (window.confirm(`Remove ${name} from this workspace?`)) remove.mutate(userId);
+    if (window.confirm(t('settings.removeConfirm', { name }))) remove.mutate(userId);
   };
 
   return (
     <section className="mb-8 rounded-xl border border-border bg-surface p-5">
-      <h2 className="mb-3 font-medium">Members</h2>
+      <h2 className="mb-3 font-medium">{t('settings.members')}</h2>
       <div className="space-y-1.5">
         {members?.map((m) => (
           <div key={m.id} className="group flex items-center gap-2 text-sm">
             <span className="flex-1 truncate">
               {m.name}
-              {m.id === currentUserId && <span className="text-muted"> (you)</span>}{' '}
+              {m.id === currentUserId && <span className="text-muted">{t('settings.you')}</span>}{' '}
               <span className="text-xs text-muted">{m.email}</span>
             </span>
             {canSetRole && m.id !== currentUserId ? (
@@ -368,7 +393,7 @@ function MembersSection({
               <button
                 type="button"
                 onClick={() => onRemove(m.id, m.name)}
-                title="Remove member"
+                title={t('settings.removeMember')}
                 className="opacity-0 transition-opacity group-hover:opacity-100"
               >
                 <Trash2 className="size-3.5 text-muted hover:text-red-400" />
@@ -386,6 +411,7 @@ function MembersSection({
 const INVITE_ROLES = WORKSPACE_ROLES.filter((r) => r !== 'owner');
 
 function InvitationsSection() {
+  const t = useT();
   const { data: invitations } = useInvitations();
   const { create, revoke } = useInvitationActions();
   const [email, setEmail] = useState('');
@@ -403,15 +429,14 @@ function InvitationsSection() {
 
   return (
     <section className="mb-8 rounded-xl border border-border bg-surface p-5">
-      <h2 className="mb-1 font-medium">Invitations</h2>
-      <p className="mb-3 text-sm text-muted">
-        Invite people by email. They join this workspace when they open the link (and sign in or
-        sign up).
-      </p>
+      <h2 className="mb-1 font-medium">{t('settings.invitations')}</h2>
+      <p className="mb-3 text-sm text-muted">{t('settings.invitationsHint')}</p>
 
       {lastInvite && (
         <div className="mb-3 rounded-md border border-brand/50 bg-brand/10 p-3 text-sm">
-          <div className="mb-1 font-medium">Invite link for {lastInvite.email}:</div>
+          <div className="mb-1 font-medium">
+            {t('settings.inviteLinkFor', { email: lastInvite.email })}
+          </div>
           <div className="flex items-center gap-2">
             <code className="flex-1 break-all rounded bg-bg px-2 py-1 text-xs">
               {inviteLink(lastInvite.token)}
@@ -419,7 +444,7 @@ function InvitationsSection() {
             <button
               type="button"
               onClick={() => navigator.clipboard?.writeText(inviteLink(lastInvite.token))}
-              title="Copy"
+              title={t('common.copy')}
               className="text-muted hover:text-text"
             >
               <Copy className="size-4" />
@@ -449,25 +474,25 @@ function InvitationsSection() {
           ))}
         </select>
         <Button onClick={invite} disabled={create.isPending}>
-          {create.isPending && <Loader2 className="size-4 animate-spin" />} Invite
+          {create.isPending && <Loader2 className="size-4 animate-spin" />} {t('settings.invite')}
         </Button>
       </div>
 
       <div className="space-y-1.5">
         {(!invitations || invitations.length === 0) && (
-          <div className="text-sm text-muted">No pending invitations.</div>
+          <div className="text-sm text-muted">{t('settings.noInvitations')}</div>
         )}
         {invitations?.map((inv) => (
           <div key={inv.id} className="group flex items-center gap-2 text-sm">
             <span className="flex-1 truncate">{inv.email}</span>
             <span className="text-xs text-muted">{inv.role}</span>
             <span className="text-xs text-muted">
-              expires {new Date(inv.expiresAt).toLocaleDateString()}
+              {t('settings.expires', { date: new Date(inv.expiresAt).toLocaleDateString() })}
             </span>
             <button
               type="button"
               onClick={() => revoke.mutate(inv.id)}
-              title="Revoke invitation"
+              title={t('settings.revokeInvitation')}
               className="opacity-0 transition-opacity group-hover:opacity-100"
             >
               <Trash2 className="size-3.5 text-muted hover:text-red-400" />
@@ -480,6 +505,7 @@ function InvitationsSection() {
 }
 
 function WebhooksSection() {
+  const t = useT();
   const { data: webhooks } = useWebhooks();
   const { create, remove } = useWebhookActions();
   const [url, setUrl] = useState('');
@@ -503,15 +529,12 @@ function WebhooksSection() {
 
   return (
     <section className="mt-8 rounded-xl border border-border bg-surface p-5">
-      <h2 className="mb-1 font-medium">Webhooks</h2>
-      <p className="mb-3 text-sm text-muted">
-        POST signed events (HMAC-SHA256 in <code className="text-xs">X-Librekanban-Signature</code>)
-        to a URL when cards or comments change.
-      </p>
+      <h2 className="mb-1 font-medium">{t('settings.webhooks')}</h2>
+      <p className="mb-3 text-sm text-muted">{t('settings.webhooksHint')}</p>
 
       {created && (
         <div className="mb-3 rounded-md border border-brand/50 bg-brand/10 p-3 text-sm">
-          <div className="mb-1 font-medium">Signing secret (shown once):</div>
+          <div className="mb-1 font-medium">{t('settings.webhookSecret')}</div>
           <code className="block break-all rounded bg-bg px-2 py-1 text-xs">{created.secret}</code>
         </div>
       )}
@@ -527,24 +550,24 @@ function WebhooksSection() {
           <input
             value={events}
             onChange={(e) => setEvents(e.target.value)}
-            placeholder="events (blank = all): card.created, card.moved"
+            placeholder={t('settings.webhookEvents')}
             className="h-9 flex-1 rounded-md border border-border bg-bg px-2 text-sm outline-none focus:ring-2 focus:ring-brand/60"
           />
           <Button onClick={add} disabled={create.isPending}>
-            {create.isPending && <Loader2 className="size-4 animate-spin" />} Add
+            {create.isPending && <Loader2 className="size-4 animate-spin" />} {t('common.add')}
           </Button>
         </div>
       </div>
 
       <div className="space-y-1.5">
         {(!webhooks || webhooks.length === 0) && (
-          <div className="text-sm text-muted">No webhooks yet.</div>
+          <div className="text-sm text-muted">{t('settings.noWebhooks')}</div>
         )}
         {webhooks?.map((w) => (
           <div key={w.id} className="group flex items-center gap-2 text-sm">
             <span className="flex-1 truncate">{w.url}</span>
             <span className="text-xs text-muted">
-              {w.events.length ? w.events.join(', ') : 'all events'}
+              {w.events.length ? w.events.join(', ') : t('settings.allEvents')}
             </span>
             <button
               type="button"

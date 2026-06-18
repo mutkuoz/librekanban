@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { ApiError, api, attachmentUrl } from '@/lib/api';
+import { type TFunc, useT } from '@/lib/i18n';
 import {
   useBoard,
   useCardActions,
@@ -45,6 +46,7 @@ export function CardModal({
   customFields: CustomField[];
   onClose: () => void;
 }) {
+  const t = useT();
   const { data: card, isLoading } = useCardDetail(cardId);
   const { data: activity } = useCardActivity(cardId);
   const update = useUpdateCard(boardId);
@@ -100,7 +102,7 @@ export function CardModal({
 
               {/* Labels */}
               <section>
-                <SectionTitle>Labels</SectionTitle>
+                <SectionTitle>{t('card.labels')}</SectionTitle>
                 <div className="flex flex-wrap items-center gap-1.5">
                   {labels.map((l) => {
                     const on = card.labelIds.includes(l.id);
@@ -133,7 +135,7 @@ export function CardModal({
                         setNewLabel('');
                       }
                     }}
-                    placeholder="+ new label"
+                    placeholder={t('card.newLabel')}
                     className="h-7 w-24 rounded-full border border-border bg-bg px-2.5 text-xs outline-none focus:ring-2 focus:ring-brand/60"
                   />
                 </div>
@@ -141,7 +143,7 @@ export function CardModal({
 
               {/* Assignees */}
               <section>
-                <SectionTitle>Assignees</SectionTitle>
+                <SectionTitle>{t('card.assignees')}</SectionTitle>
                 <div className="flex flex-wrap gap-1.5">
                   {members.map((m) => {
                     const on = card.assigneeIds.includes(m.id);
@@ -174,7 +176,7 @@ export function CardModal({
               {/* Dates + priority */}
               <div className="flex flex-wrap gap-6">
                 <section>
-                  <SectionTitle>Start date</SectionTitle>
+                  <SectionTitle>{t('card.startDate')}</SectionTitle>
                   <input
                     type="date"
                     value={card.startAt ? card.startAt.slice(0, 10) : ''}
@@ -190,7 +192,7 @@ export function CardModal({
                   />
                 </section>
                 <section>
-                  <SectionTitle>Due date</SectionTitle>
+                  <SectionTitle>{t('card.dueDate')}</SectionTitle>
                   <input
                     type="date"
                     value={card.dueAt ? card.dueAt.slice(0, 10) : ''}
@@ -206,7 +208,7 @@ export function CardModal({
                   />
                 </section>
                 <section>
-                  <SectionTitle>Priority</SectionTitle>
+                  <SectionTitle>{t('card.priority')}</SectionTitle>
                   <select
                     value={card.priority}
                     onChange={(e) =>
@@ -225,7 +227,7 @@ export function CardModal({
 
               {/* Description */}
               <section>
-                <SectionTitle>Description</SectionTitle>
+                <SectionTitle>{t('card.description')}</SectionTitle>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -234,7 +236,7 @@ export function CardModal({
                     update.mutate({ cardId, input: { description } })
                   }
                   rows={4}
-                  placeholder="Add more detail…"
+                  placeholder={t('card.descriptionPlaceholder')}
                   className="w-full resize-none rounded-md border border-border bg-bg p-2 text-sm outline-none focus:ring-2 focus:ring-brand/60"
                 />
               </section>
@@ -242,7 +244,7 @@ export function CardModal({
               {/* Custom fields */}
               {customFields.length > 0 && (
                 <section className="space-y-2">
-                  <SectionTitle>Custom fields</SectionTitle>
+                  <SectionTitle>{t('card.customFields')}</SectionTitle>
                   {customFields.map((f) => (
                     <CustomFieldRow
                       key={f.id}
@@ -256,7 +258,7 @@ export function CardModal({
 
               {/* Checklists */}
               <section className="space-y-3">
-                <SectionTitle>Checklists</SectionTitle>
+                <SectionTitle>{t('card.checklists')}</SectionTitle>
                 {card.checklists.map((cl) => (
                   <ChecklistBlock key={cl.id} checklist={cl} run={run} />
                 ))}
@@ -269,14 +271,14 @@ export function CardModal({
                       setNewChecklist('');
                     }
                   }}
-                  placeholder="+ add checklist"
+                  placeholder={t('card.addChecklist')}
                   className="h-8 w-full rounded-md border border-border bg-bg px-2 text-sm outline-none focus:ring-2 focus:ring-brand/60"
                 />
               </section>
 
               {/* Attachments */}
               <section className="space-y-2">
-                <SectionTitle>Attachments</SectionTitle>
+                <SectionTitle>{t('card.attachments')}</SectionTitle>
                 {card.attachments.map((a) => (
                   <div key={a.id} className="group flex items-center gap-2 text-sm">
                     {a.contentType.startsWith('image/') ? (
@@ -308,7 +310,7 @@ export function CardModal({
                   </div>
                 ))}
                 <label className="inline-flex cursor-pointer items-center gap-1.5 text-sm text-muted hover:text-text">
-                  <Paperclip className="size-4" /> Add attachment
+                  <Paperclip className="size-4" /> {t('card.addAttachment')}
                   <input
                     type="file"
                     className="hidden"
@@ -331,7 +333,7 @@ export function CardModal({
 
               {/* Comments */}
               <section className="space-y-3">
-                <SectionTitle>Comments</SectionTitle>
+                <SectionTitle>{t('card.comments')}</SectionTitle>
                 {card.comments.map((cm) => (
                   <div key={cm.id} className="group flex gap-2 text-sm">
                     <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-surface-2 text-[10px] text-muted">
@@ -339,7 +341,7 @@ export function CardModal({
                     </span>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium">{cm.author?.name ?? 'Unknown'}</span>
+                        <span className="font-medium">{cm.author?.name ?? t('card.unknown')}</span>
                         <span className="text-xs text-muted">
                           {new Date(cm.createdAt).toLocaleString()}
                         </span>
@@ -360,7 +362,7 @@ export function CardModal({
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
                     rows={1}
-                    placeholder="Write a comment…"
+                    placeholder={t('card.commentPlaceholder')}
                     className="flex-1 resize-none rounded-md border border-border bg-bg p-2 text-sm outline-none focus:ring-2 focus:ring-brand/60"
                   />
                   <Button
@@ -371,19 +373,21 @@ export function CardModal({
                       setComment('');
                     }}
                   >
-                    Send
+                    {t('common.send')}
                   </Button>
                 </div>
               </section>
 
               {/* Activity */}
               <section>
-                <SectionTitle>Activity</SectionTitle>
+                <SectionTitle>{t('card.activity')}</SectionTitle>
                 <div className="space-y-1.5">
                   {activity?.map((a) => (
                     <div key={a.id} className="flex items-baseline gap-2 text-xs text-muted">
-                      <span className="font-medium text-text">{a.actorName ?? 'Someone'}</span>
-                      <span>{verbText(a.verb)}</span>
+                      <span className="font-medium text-text">
+                        {a.actorName ?? t('card.someone')}
+                      </span>
+                      <span>{verbText(a.verb, t)}</span>
                       <span className="ml-auto">{new Date(a.createdAt).toLocaleString()}</span>
                     </div>
                   ))}
@@ -399,7 +403,7 @@ export function CardModal({
                       onClose();
                     }}
                   >
-                    <Trash2 className="size-4" /> Delete
+                    <Trash2 className="size-4" /> {t('common.delete')}
                   </Button>
                   <Button
                     variant="ghost"
@@ -408,11 +412,11 @@ export function CardModal({
                       onClose();
                     }}
                   >
-                    <Archive className="size-4" /> Archive
+                    <Archive className="size-4" /> {t('card.archive')}
                   </Button>
                 </div>
                 <Button variant="secondary" onClick={onClose}>
-                  Close
+                  {t('common.close')}
                 </Button>
               </div>
             </div>
@@ -496,16 +500,16 @@ function formatBytes(n: number): string {
   return `${(n / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function verbText(verb: string): string {
+function verbText(verb: string, t: TFunc): string {
   const map: Record<string, string> = {
-    'card.created': 'created this card',
-    'card.updated': 'updated this card',
-    'card.moved': 'moved this card',
-    'card.archived': 'archived this card',
-    'card.deleted': 'deleted this card',
-    'card.linked': 'added a dependency',
-    'card.unlinked': 'removed a dependency',
-    'comment.added': 'commented',
+    'card.created': t('verb.card.created'),
+    'card.updated': t('verb.card.updated'),
+    'card.moved': t('verb.card.moved'),
+    'card.archived': t('verb.card.archived'),
+    'card.deleted': t('verb.card.deleted'),
+    'card.linked': t('verb.card.linked'),
+    'card.unlinked': t('verb.card.unlinked'),
+    'comment.added': t('verb.comment.added'),
   };
   return map[verb] ?? verb;
 }
@@ -518,7 +522,15 @@ function SectionTitle({ children }: { children: ReactNode }) {
   );
 }
 
-function DependencyRow({ link, onRemove }: { link: CardLink; onRemove: () => void }) {
+function DependencyRow({
+  link,
+  onRemove,
+  removeTitle,
+}: {
+  link: CardLink;
+  onRemove: () => void;
+  removeTitle: string;
+}) {
   return (
     <div className="group flex items-center gap-2 text-sm">
       <Ban className={cn('size-3.5 shrink-0', link.isComplete ? 'text-muted' : 'text-amber-400')} />
@@ -528,7 +540,7 @@ function DependencyRow({ link, onRemove }: { link: CardLink; onRemove: () => voi
       <button
         type="button"
         onClick={onRemove}
-        title="Remove dependency"
+        title={removeTitle}
         className="opacity-0 transition-opacity group-hover:opacity-100"
       >
         <Trash2 className="size-3.5 text-muted hover:text-red-400" />
@@ -548,24 +560,27 @@ function DependenciesSection({
   blockedBy: CardLink[];
   blocking: CardLink[];
 }) {
+  const t = useT();
   const { data: board } = useBoard(boardId);
   const action = useCardActions(boardId, cardId);
   const blockedIds = new Set(blockedBy.map((b) => b.id));
   const options = (board?.cards ?? [])
     .filter((c) => c.id !== cardId && !c.isArchived && !blockedIds.has(c.id))
     .sort((a, b) => a.number - b.number);
+  const removeTitle = t('card.removeDependency');
 
   return (
     <section className="space-y-2">
-      <SectionTitle>Dependencies</SectionTitle>
+      <SectionTitle>{t('card.dependencies')}</SectionTitle>
 
       {blockedBy.length > 0 && (
         <div className="space-y-1">
-          <div className="text-xs text-muted">Blocked by</div>
+          <div className="text-xs text-muted">{t('card.blockedBy')}</div>
           {blockedBy.map((b) => (
             <DependencyRow
               key={b.id}
               link={b}
+              removeTitle={removeTitle}
               onRemove={() => action.mutate(() => api.removeDependency(cardId, b.id))}
             />
           ))}
@@ -574,11 +589,12 @@ function DependenciesSection({
 
       {blocking.length > 0 && (
         <div className="space-y-1">
-          <div className="text-xs text-muted">Blocking</div>
+          <div className="text-xs text-muted">{t('card.blocking')}</div>
           {blocking.map((b) => (
             <DependencyRow
               key={b.id}
               link={b}
+              removeTitle={removeTitle}
               onRemove={() => action.mutate(() => api.removeDependency(b.id, cardId))}
             />
           ))}
@@ -593,7 +609,7 @@ function DependenciesSection({
         }}
         className="h-8 w-full rounded-md border border-border bg-bg px-2 text-sm text-muted outline-none focus:ring-2 focus:ring-brand/60"
       >
-        <option value="">+ add a blocker…</option>
+        <option value="">{t('card.addBlocker')}</option>
         {options.map((c) => (
           <option key={c.id} value={c.id}>
             #{c.number} {c.title}
@@ -603,7 +619,7 @@ function DependenciesSection({
 
       {action.isError && (
         <div className="text-xs text-red-400">
-          {action.error instanceof ApiError ? action.error.message : 'Could not link the card'}
+          {action.error instanceof ApiError ? action.error.message : t('card.couldNotLink')}
         </div>
       )}
     </section>

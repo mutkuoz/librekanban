@@ -1,4 +1,5 @@
 import type { BoardDetail } from '@/lib/api';
+import { useT } from '@/lib/i18n';
 import {
   useCreateCard,
   useCreateColumn,
@@ -51,6 +52,7 @@ export function BoardView({
   canEdit: boolean;
   onCardClick: (card: BoardCard) => void;
 }) {
+  const t = useT();
   const boardId = detail.board.id;
   const moveCard = useMoveCard(boardId);
   const createCard = useCreateCard(boardId);
@@ -185,7 +187,7 @@ export function BoardView({
                     }
                     if (e.key === 'Escape') setAddingCol(false);
                   }}
-                  placeholder="Column name…"
+                  placeholder={t('board.columnNamePlaceholder')}
                   className="w-full rounded-md border border-border bg-bg p-2 text-sm outline-none focus:ring-2 focus:ring-brand/60"
                 />
               </div>
@@ -195,7 +197,7 @@ export function BoardView({
                 onClick={() => setAddingCol(true)}
                 className="flex w-full items-center gap-1.5 rounded-xl border border-dashed border-border px-3 py-2.5 text-sm text-muted hover:border-brand/60 hover:text-text"
               >
-                <Plus className="size-4" /> Add column
+                <Plus className="size-4" /> {t('board.addColumn')}
               </button>
             )}
           </div>

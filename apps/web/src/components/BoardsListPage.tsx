@@ -1,11 +1,13 @@
 import { ImportDialog } from '@/components/ImportDialog';
 import { Button } from '@/components/ui/button';
+import { useT } from '@/lib/i18n';
 import { useBoards, useCreateBoard } from '@/lib/queries';
 import { Link } from '@tanstack/react-router';
 import { Loader2, Plus, Upload } from 'lucide-react';
 import { useState } from 'react';
 
 export function BoardsListPage() {
+  const t = useT();
   const { data: boards, isLoading } = useBoards();
   const create = useCreateBoard();
   const [name, setName] = useState('');
@@ -23,14 +25,14 @@ export function BoardsListPage() {
   return (
     <div className="mx-auto max-w-5xl p-6">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Your boards</h1>
+        <h1 className="text-xl font-semibold">{t('boards.title')}</h1>
         {!creating && (
           <div className="flex gap-2">
             <Button variant="secondary" onClick={() => setImporting(true)}>
-              <Upload className="size-4" /> Import
+              <Upload className="size-4" /> {t('boards.import')}
             </Button>
             <Button onClick={() => setCreating(true)}>
-              <Plus className="size-4" /> New board
+              <Plus className="size-4" /> {t('boards.newBoard')}
             </Button>
           </div>
         )}
@@ -46,20 +48,20 @@ export function BoardsListPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && submit()}
-            placeholder="Board name"
+            placeholder={t('boards.boardName')}
             className="h-9 flex-1 rounded-md border border-border bg-surface px-3 text-sm outline-none focus:ring-2 focus:ring-brand/60"
           />
           <Button onClick={submit} disabled={create.isPending}>
-            {create.isPending && <Loader2 className="size-4 animate-spin" />} Create
+            {create.isPending && <Loader2 className="size-4 animate-spin" />} {t('common.create')}
           </Button>
           <Button variant="ghost" onClick={() => setCreating(false)}>
-            Cancel
+            {t('common.cancel')}
           </Button>
         </div>
       )}
 
       {isLoading ? (
-        <div className="text-muted">Loading…</div>
+        <div className="text-muted">{t('common.loading')}</div>
       ) : boards && boards.length > 0 ? (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {boards.map((b) => (
@@ -78,7 +80,7 @@ export function BoardsListPage() {
         </div>
       ) : (
         <div className="rounded-xl border border-dashed border-border p-10 text-center text-muted">
-          No boards yet. Create your first one.
+          {t('boards.empty')}
         </div>
       )}
     </div>

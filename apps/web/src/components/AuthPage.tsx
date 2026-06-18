@@ -1,11 +1,13 @@
 import { Button } from '@/components/ui/button';
 import { signIn, signInWith, signInWithOIDC, signUp, verifyTotp } from '@/lib/auth';
+import { useT } from '@/lib/i18n';
 import { useAppConfig } from '@/lib/queries';
 import { useQueryClient } from '@tanstack/react-query';
 import { Github, KeyRound, Loader2 } from 'lucide-react';
 import { type FormEvent, useState } from 'react';
 
 export function AuthPage() {
+  const t = useT();
   const qc = useQueryClient();
   const { data: config } = useAppConfig();
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
@@ -36,7 +38,7 @@ export function AuthPage() {
       }
       await qc.invalidateQueries({ queryKey: ['me'] });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setError(err instanceof Error ? err.message : t('auth.somethingWrong'));
     } finally {
       setBusy(false);
     }
@@ -50,7 +52,7 @@ export function AuthPage() {
       await verifyTotp(code.trim());
       await qc.invalidateQueries({ queryKey: ['me'] });
     } catch {
-      setError('Invalid code. Try again.');
+      setError(t('auth.invalidCode'));
     } finally {
       setBusy(false);
     }
@@ -61,8 +63,8 @@ export function AuthPage() {
       <div className="min-h-full grid place-items-center p-6">
         <form onSubmit={onVerify} className="w-full max-w-sm space-y-3">
           <div className="mb-4 text-center">
-            <div className="text-2xl font-semibold tracking-tight">Two-factor auth</div>
-            <div className="mt-1 text-sm text-muted">Enter the 6-digit code from your app</div>
+            <div className="text-2xl font-semibold tracking-tight">{t('auth.twoFactorTitle')}</div>
+            <div className="mt-1 text-sm text-muted">{t('auth.twoFactorPrompt')}</div>
           </div>
           <input
             className={`${inputCls} text-center tracking-[0.4em]`}
@@ -76,7 +78,7 @@ export function AuthPage() {
           />
           {error && <div className="text-sm text-red-400">{error}</div>}
           <Button type="submit" className="w-full" disabled={busy}>
-            {busy && <Loader2 className="size-4 animate-spin" />} Verify
+            {busy && <Loader2 className="size-4 animate-spin" />} {t('common.verify')}
           </Button>
         </form>
       </div>
@@ -88,7 +90,7 @@ export function AuthPage() {
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <div className="text-2xl font-semibold tracking-tight">librekanban</div>
-          <div className="text-muted text-sm mt-1">Fast, self-hosted task boards</div>
+          <div className="text-muted text-sm mt-1">{t('auth.tagline')}</div>
         </div>
 
         <form
@@ -98,7 +100,7 @@ export function AuthPage() {
           {mode === 'signup' && (
             <input
               className={inputCls}
-              placeholder="Name"
+              placeholder={t('auth.name')}
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -107,7 +109,7 @@ export function AuthPage() {
           <input
             className={inputCls}
             type="email"
-            placeholder="Email"
+            placeholder={t('auth.email')}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -115,7 +117,7 @@ export function AuthPage() {
           <input
             className={inputCls}
             type="password"
-            placeholder="Password"
+            placeholder={t('auth.password')}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             minLength={8}
@@ -126,12 +128,12 @@ export function AuthPage() {
 
           <Button type="submit" className="w-full" disabled={busy}>
             {busy && <Loader2 className="size-4 animate-spin" />}
-            {mode === 'signup' ? 'Create account' : 'Sign in'}
+            {mode === 'signup' ? t('auth.createAccount') : t('auth.signIn')}
           </Button>
 
           <div className="flex items-center gap-3 py-1 text-xs text-muted">
             <div className="h-px flex-1 bg-border" />
-            or
+            {t('auth.or')}
             <div className="h-px flex-1 bg-border" />
           </div>
 
@@ -141,7 +143,7 @@ export function AuthPage() {
             className="w-full"
             onClick={() => signInWith('github')}
           >
-            <Github className="size-4" /> Continue with GitHub
+            <Github className="size-4" /> {t('auth.continueWithGithub')}
           </Button>
 
           {config?.oidcEnabled && (
@@ -151,7 +153,7 @@ export function AuthPage() {
               className="w-full"
               onClick={() => signInWithOIDC()}
             >
-              <KeyRound className="size-4" /> Continue with {config.oidcName}
+              <KeyRound className="size-4" /> {t('auth.continueWith', { name: config.oidcName })}
             </Button>
           )}
         </form>
@@ -161,7 +163,7 @@ export function AuthPage() {
           className="mt-4 w-full text-center text-sm text-muted hover:text-text"
           onClick={() => setMode(mode === 'signup' ? 'signin' : 'signup')}
         >
-          {mode === 'signup' ? 'Already have an account? Sign in' : 'New here? Create an account'}
+          {mode === 'signup' ? t('auth.haveAccount') : t('auth.newHere')}
         </button>
       </div>
     </div>

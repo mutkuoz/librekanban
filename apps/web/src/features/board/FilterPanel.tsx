@@ -1,3 +1,4 @@
+import { type TranslationKey, useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import {
   type CustomField,
@@ -13,19 +14,19 @@ import { Filter } from 'lucide-react';
 import { useState } from 'react';
 import { type BoardFilter, EMPTY_FILTER, activeFilterCount } from './filter';
 
-const SORT_LABELS: Record<SortKey, string> = {
-  manual: 'Manual',
-  priority: 'Priority',
-  due: 'Due date',
-  created: 'Created',
-  title: 'Title',
+const SORT_LABEL_KEY: Record<SortKey, TranslationKey> = {
+  manual: 'sort.manual',
+  priority: 'sort.priority',
+  due: 'sort.due',
+  created: 'sort.created',
+  title: 'sort.title',
 };
-const DUE_LABELS: Record<DueState, string> = {
-  any: 'Any',
-  overdue: 'Overdue',
-  today: 'Due today',
-  week: 'Due this week',
-  none: 'No due date',
+const DUE_LABEL_KEY: Record<DueState, TranslationKey> = {
+  any: 'due.any',
+  overdue: 'due.overdue',
+  today: 'due.today',
+  week: 'due.week',
+  none: 'due.none',
 };
 
 const selectCls = 'h-8 w-full rounded-md border border-border bg-bg px-2 text-sm outline-none';
@@ -45,6 +46,7 @@ export function FilterPanel({
   customFields: CustomField[];
   members: WorkspaceMember[];
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const count = activeFilterCount(filter);
 
@@ -73,7 +75,7 @@ export function FilterPanel({
         )}
       >
         <Filter className="size-4" />
-        Filters
+        {t('filter.title')}
         {count > 0 && (
           <span className="grid size-4 place-items-center rounded-full bg-brand text-[10px] text-brand-fg">
             {count}
@@ -92,7 +94,7 @@ export function FilterPanel({
           <div className="absolute right-0 z-20 mt-2 w-72 space-y-3 rounded-md border border-border bg-surface p-3 shadow-xl">
             <div>
               <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">
-                Sort by
+                {t('filter.sortBy')}
               </div>
               <select
                 value={sort}
@@ -101,7 +103,7 @@ export function FilterPanel({
               >
                 {SORT_KEYS.map((k) => (
                   <option key={k} value={k}>
-                    {SORT_LABELS[k]}
+                    {t(SORT_LABEL_KEY[k])}
                   </option>
                 ))}
               </select>
@@ -109,7 +111,7 @@ export function FilterPanel({
 
             <div>
               <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">
-                Priority
+                {t('filter.priority')}
               </div>
               <div className="flex flex-wrap gap-1">
                 {PRIORITIES.map((p) => (
@@ -132,7 +134,7 @@ export function FilterPanel({
 
             <div>
               <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">
-                Due
+                {t('filter.due')}
               </div>
               <select
                 value={filter.due}
@@ -141,7 +143,7 @@ export function FilterPanel({
               >
                 {DUE_STATES.map((d) => (
                   <option key={d} value={d}>
-                    {DUE_LABELS[d]}
+                    {t(DUE_LABEL_KEY[d])}
                   </option>
                 ))}
               </select>
@@ -162,7 +164,7 @@ export function FilterPanel({
                 onClick={clearAll}
                 className="w-full rounded-md border border-border py-1.5 text-sm text-muted hover:text-text"
               >
-                Clear filters
+                {t('filter.clear')}
               </button>
             )}
           </div>
@@ -183,6 +185,7 @@ function CustomFieldFilter({
   customFields: CustomField[];
   members: WorkspaceMember[];
 }) {
+  const t = useT();
   const [fieldId, setFieldId] = useState(filter.customField?.fieldId ?? '');
   const field = customFields.find((f) => f.id === fieldId) ?? null;
   const value = filter.customField?.value ?? '';
@@ -193,7 +196,7 @@ function CustomFieldFilter({
   return (
     <div>
       <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">
-        Custom field
+        {t('filter.customField')}
       </div>
       <select
         value={fieldId}
@@ -214,7 +217,7 @@ function CustomFieldFilter({
       {field &&
         (field.type === 'select' || field.type === 'multiselect' ? (
           <select value={value} onChange={(e) => setValue(e.target.value)} className={selectCls}>
-            <option value="">Any</option>
+            <option value="">{t('filter.any')}</option>
             {(field.config.options ?? []).map((o) => (
               <option key={o} value={o}>
                 {o}
@@ -223,13 +226,13 @@ function CustomFieldFilter({
           </select>
         ) : field.type === 'checkbox' ? (
           <select value={value} onChange={(e) => setValue(e.target.value)} className={selectCls}>
-            <option value="">Any</option>
-            <option value="true">Checked</option>
-            <option value="false">Unchecked</option>
+            <option value="">{t('filter.any')}</option>
+            <option value="true">{t('filter.checked')}</option>
+            <option value="false">{t('filter.unchecked')}</option>
           </select>
         ) : field.type === 'user' ? (
           <select value={value} onChange={(e) => setValue(e.target.value)} className={selectCls}>
-            <option value="">Anyone</option>
+            <option value="">{t('board.anyone')}</option>
             {members.map((m) => (
               <option key={m.id} value={m.id}>
                 {m.name}
@@ -241,7 +244,7 @@ function CustomFieldFilter({
             type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'}
             value={value}
             onChange={(e) => setValue(e.target.value)}
-            placeholder="Value…"
+            placeholder={t('filter.value')}
             className={selectCls}
           />
         ))}

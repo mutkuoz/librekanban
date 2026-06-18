@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -37,6 +38,7 @@ export function Column({
   onUpdateColumn: (columnId: string, input: UpdateColumnInput) => void;
   onDeleteColumn: (columnId: string) => void;
 }) {
+  const t = useT();
   const { setNodeRef, isOver } = useDroppable({ id: list.column.id, data: { type: 'column' } });
   const [adding, setAdding] = useState(false);
   const [title, setTitle] = useState('');
@@ -89,11 +91,11 @@ export function Column({
             onBlur={() =>
               name.trim() && name !== list.column.name && onUpdateColumn(list.column.id, { name })
             }
-            placeholder="Column name"
+            placeholder={t('column.name')}
             className="w-full rounded border border-border bg-surface px-2 py-1 outline-none"
           />
           <label className="flex items-center justify-between gap-2 text-muted">
-            WIP limit
+            {t('column.wipLimit')}
             <input
               type="number"
               min={0}
@@ -107,7 +109,7 @@ export function Column({
             />
           </label>
           <label className="flex items-center justify-between gap-2 text-muted">
-            Done column
+            {t('column.doneColumn')}
             <input
               type="checkbox"
               defaultChecked={list.column.isDoneColumn}
@@ -119,7 +121,7 @@ export function Column({
             onClick={() => onDeleteColumn(list.column.id)}
             className="flex items-center gap-1.5 text-red-400 hover:text-red-300"
           >
-            <Trash2 className="size-3.5" /> Delete column
+            <Trash2 className="size-3.5" /> {t('column.deleteColumn')}
           </button>
         </div>
       )}
@@ -160,16 +162,16 @@ export function Column({
                 }
                 if (e.key === 'Escape') setAdding(false);
               }}
-              placeholder="Card title…"
+              placeholder={t('column.cardTitle')}
               rows={2}
               className="w-full resize-none rounded-md border border-border bg-bg p-2 text-sm outline-none focus:ring-2 focus:ring-brand/60"
             />
             <div className="flex gap-2">
               <Button size="sm" onClick={submit}>
-                Add
+                {t('common.add')}
               </Button>
               <Button size="sm" variant="ghost" onClick={() => setAdding(false)}>
-                Cancel
+                {t('common.cancel')}
               </Button>
             </div>
           </div>
@@ -179,7 +181,7 @@ export function Column({
             onClick={() => setAdding(true)}
             className="m-2 flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-muted hover:bg-surface-2 hover:text-text"
           >
-            <Plus className="size-4" /> Add card
+            <Plus className="size-4" /> {t('column.addCard')}
           </button>
         ))}
     </div>

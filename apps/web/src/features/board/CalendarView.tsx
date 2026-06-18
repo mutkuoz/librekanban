@@ -1,4 +1,5 @@
 import type { BoardDetail } from '@/lib/api';
+import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { BoardCard } from '@librekanban/shared';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -18,6 +19,7 @@ export function CalendarView({
   filter: BoardFilter;
   onCardClick: (card: BoardCard) => void;
 }) {
+  const t = useT();
   const [month, setMonth] = useState(() => {
     const n = new Date();
     return new Date(n.getFullYear(), n.getMonth(), 1);
@@ -71,7 +73,9 @@ export function CalendarView({
           <ChevronRight className="size-4" />
         </button>
         {unscheduled > 0 && (
-          <span className="ml-auto text-xs text-muted">{unscheduled} unscheduled</span>
+          <span className="ml-auto text-xs text-muted">
+            {t('board.unscheduled', { n: unscheduled })}
+          </span>
         )}
       </div>
 
