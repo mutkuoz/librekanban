@@ -16,18 +16,19 @@ import {
 } from '@dnd-kit/core';
 import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
-import type { BoardCard, WorkspaceMember } from '@librekanban/shared';
+import type { BoardCard, SortKey, WorkspaceMember } from '@librekanban/shared';
 import { Plus } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { type BoardList, Column } from './Column';
-import { type BoardFilter, byPosition as byPos, matchesFilter } from './filter';
+import { type BoardFilter, byPosition as byPos, comparatorFor, matchesFilter } from './filter';
 
-function groupLists(detail: BoardDetail, filter: BoardFilter): BoardList[] {
+function groupLists(detail: BoardDetail, filter: BoardFilter, sort: SortKey): BoardList[] {
+  const cmp = comparatorFor(sort);
   return [...detail.columns].sort(byPos).map((column) => ({
     column,
     cards: detail.cards
-      .filter((c) => c.columnId === column.id && matchesFilter(c, filter))
-      .sort(byPos),
+      .filter((c) => c.columnId === column.id && matchesFilter(c, filter, detail.customFields))
+      .sort(cmp),
   }));
 }
 
@@ -39,12 +40,14 @@ export function BoardView({
   detail,
   members,
   filter,
+  sort,
   canEdit,
   onCardClick,
 }: {
   detail: BoardDetail;
   members: WorkspaceMember[];
   filter: BoardFilter;
+  sort: SortKey;
   canEdit: boolean;
   onCardClick: (card: BoardCard) => void;
 }) {
@@ -57,15 +60,15 @@ export function BoardView({
   const [addingCol, setAddingCol] = useState(false);
   const [colName, setColName] = useState('');
 
-  const [lists, setLists] = useState<BoardList[]>(() => groupLists(detail, filter));
+  const [lists, setLists] = useState<BoardList[]>(() => groupLists(detail, filter, sort));
   const [activeId, setActiveId] = useState<string | null>(null);
   const draggingRef = useRef(false);
 
-  // Re-sync from the server whenever fresh data (or the filter) changes and
+  // Re-sync from the server whenever fresh data (or the filter/sort) changes and
   // we're not mid-drag.
   useEffect(() => {
-    if (!draggingRef.current) setLists(groupLists(detail, filter));
-  }, [detail, filter]);
+    if (!draggingRef.current) setLists(groupLists(detail, filter, sort));
+  }, [detail, filter, sort]);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 

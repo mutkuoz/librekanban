@@ -1,6 +1,6 @@
 import { useBoard, useBoardRealtime, useMembers } from '@/lib/queries';
 import { cn } from '@/lib/utils';
-import { type Presence, can } from '@librekanban/shared';
+import { type Presence, type SortKey, can } from '@librekanban/shared';
 import { Link } from '@tanstack/react-router';
 import { Download, Search, SlidersHorizontal } from 'lucide-react';
 import { useState } from 'react';
@@ -8,8 +8,9 @@ import { BoardView } from './BoardView';
 import { CalendarView } from './CalendarView';
 import { CardModal } from './CardModal';
 import { CustomFieldsDialog } from './CustomFieldsDialog';
+import { FilterPanel } from './FilterPanel';
 import { ListView } from './ListView';
-import type { BoardFilter } from './filter';
+import { type BoardFilter, EMPTY_FILTER } from './filter';
 
 function Avatars({ users }: { users: Presence['users'] }) {
   if (users.length === 0) return null;
@@ -36,7 +37,8 @@ export function BoardPage({ boardId }: { boardId: string }) {
   const [fieldsOpen, setFieldsOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [view, setView] = useState<'board' | 'list' | 'calendar'>('board');
-  const [filter, setFilter] = useState<BoardFilter>({ text: '', labelId: null, assigneeId: null });
+  const [filter, setFilter] = useState<BoardFilter>(EMPTY_FILTER);
+  const [sort, setSort] = useState<SortKey>('manual');
 
   if (isLoading)
     return <div className="grid h-full place-items-center text-muted">Loading board…</div>;
@@ -109,6 +111,14 @@ export function BoardPage({ boardId }: { boardId: string }) {
               </option>
             ))}
           </select>
+          <FilterPanel
+            filter={filter}
+            setFilter={setFilter}
+            sort={sort}
+            setSort={setSort}
+            customFields={data.customFields}
+            members={memberList}
+          />
           <div className="relative">
             <button
               type="button"
@@ -165,6 +175,7 @@ export function BoardPage({ boardId }: { boardId: string }) {
             detail={data}
             members={memberList}
             filter={filter}
+            sort={sort}
             canEdit={canEdit}
             onCardClick={(c) => setSelectedId(c.id)}
           />
@@ -174,6 +185,7 @@ export function BoardPage({ boardId }: { boardId: string }) {
             detail={data}
             members={memberList}
             filter={filter}
+            sort={sort}
             onCardClick={(c) => setSelectedId(c.id)}
           />
         )}

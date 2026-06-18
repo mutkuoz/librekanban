@@ -40,9 +40,11 @@ collaboration / admin panel** — multi-workspace switching (`X-Workspace-Id`),
 member management (change role, remove, last-owner guard), and **email
 invitations** (token links, accept page) in Settings, all RBAC-gated; **card
 dependencies** — blocked-by / blocking links with cycle prevention, a "blocked"
-chip on the board (cleared once blockers complete), and a card-modal editor.
-**Remaining:** filter/sort by custom field, advanced filtering, OIDC/SSO +
-2FA/passkeys, theming/white-label, i18n.
+chip on the board (cleared once blockers complete), and a card-modal editor;
+**advanced filtering + sort** — filter cards by priority, due-date state, and
+custom-field value (on top of text/label/assignee), plus sort by
+priority/due/created/title, applied across board/list/calendar.
+**Remaining:** saved views, OIDC/SSO + 2FA/passkeys, theming/white-label, i18n.
 
 ### M5 — Polish & ops (in progress)
 **Done:** importers — **Kanboard/CSV** + **Trello JSON** (upload → new board);

@@ -23,7 +23,9 @@ export function CalendarView({
     return new Date(n.getFullYear(), n.getMonth(), 1);
   });
 
-  const scheduled = detail.cards.filter((c) => matchesFilter(c, filter) && c.dueAt);
+  const scheduled = detail.cards.filter(
+    (c) => matchesFilter(c, filter, detail.customFields) && c.dueAt,
+  );
   const byDay = new Map<string, BoardCard[]>();
   for (const c of scheduled) {
     const k = dayKey(new Date(c.dueAt as string));
@@ -31,7 +33,9 @@ export function CalendarView({
     if (arr) arr.push(c);
     else byDay.set(k, [c]);
   }
-  const unscheduled = detail.cards.filter((c) => matchesFilter(c, filter) && !c.dueAt).length;
+  const unscheduled = detail.cards.filter(
+    (c) => matchesFilter(c, filter, detail.customFields) && !c.dueAt,
+  ).length;
 
   const year = month.getFullYear();
   const m = month.getMonth();

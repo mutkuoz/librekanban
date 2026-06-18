@@ -1,8 +1,8 @@
 import type { BoardDetail } from '@/lib/api';
 import { cn } from '@/lib/utils';
-import type { BoardCard, Label, Priority, WorkspaceMember } from '@librekanban/shared';
+import type { BoardCard, Label, Priority, SortKey, WorkspaceMember } from '@librekanban/shared';
 import { CalendarClock } from 'lucide-react';
-import { type BoardFilter, byPosition, matchesFilter } from './filter';
+import { type BoardFilter, byPosition, comparatorFor, matchesFilter } from './filter';
 
 const priorityDot: Record<Priority, string> = {
   none: 'bg-transparent',
@@ -85,20 +85,23 @@ export function ListView({
   detail,
   members,
   filter,
+  sort,
   onCardClick,
 }: {
   detail: BoardDetail;
   members: WorkspaceMember[];
   filter: BoardFilter;
+  sort: SortKey;
   onCardClick: (card: BoardCard) => void;
 }) {
-  const cards = detail.cards.filter((c) => matchesFilter(c, filter));
+  const cmp = comparatorFor(sort);
+  const cards = detail.cards.filter((c) => matchesFilter(c, filter, detail.customFields));
   const columns = [...detail.columns].sort(byPosition);
 
   return (
     <div className="mx-auto max-w-3xl space-y-5 overflow-y-auto p-4">
       {columns.map((col) => {
-        const colCards = cards.filter((c) => c.columnId === col.id).sort(byPosition);
+        const colCards = cards.filter((c) => c.columnId === col.id).sort(cmp);
         if (colCards.length === 0) return null;
         return (
           <div key={col.id}>
