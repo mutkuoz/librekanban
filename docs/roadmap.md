@@ -47,14 +47,17 @@ priority/due/created/title, applied across board/list/calendar; **saved views**
 — named, board-scoped filter+sort presets, persisted server-side and shared with
 all board members (creator/admin can delete); **theming** — Light/Dark/Auto
 modes + accent-color picker in Settings, persisted client-side and applied
-before first paint.
-**Remaining:** OIDC/SSO + 2FA/passkeys, i18n.
+before first paint; **SSO/OIDC login** (generic OIDC via discovery, surfaced on
+the sign-in page when configured) and **TOTP 2FA** (authenticator enrollment
+with backup codes, a sign-in challenge step, enable/disable in Settings).
+**Remaining:** passkeys, i18n.
 
 ### M5 — Polish & ops (in progress)
 **Done:** importers — **Kanboard/CSV** + **Trello JSON** (upload → new board);
 **export** — board to JSON or flat-cards CSV (download); **Playwright E2E**
 covering sign-up → seeded board → add card → **drag-and-drop** → card modal /
-labels, plus card dependencies and team settings (member list + invite), running
+labels, plus card dependencies, advanced filtering, saved views, theming, the
+SSO button, 2FA enrollment, and team settings (member list + invite), running
 in CI against the single-container build.
 **Remaining:** backup/restore CLI, SQLite "lite mode", metrics/observability,
 upgrade tooling, large-board virtualization, a11y + keyboard shortcuts,

@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { getActiveWorkspace } from '@/lib/api';
+import { type TwoFactorSetup, disable2FA, enable2FA, verifyTotp } from '@/lib/auth';
 import {
   useInvitationActions,
   useInvitations,
@@ -29,6 +30,7 @@ import {
   type WorkspaceRole,
   can,
 } from '@librekanban/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { Copy, Loader2, Trash2 } from 'lucide-react';
 import { useState } from 'react';
@@ -77,6 +79,8 @@ export function SettingsPage() {
       </section>
 
       <AppearanceSection />
+
+      <SecuritySection enabled={me?.user.twoFactorEnabled ?? false} />
 
       {canManageMembers && (
         <>
@@ -207,6 +211,113 @@ function AppearanceSection() {
           ))}
         </div>
       </div>
+    </section>
+  );
+}
+
+const fieldCls =
+  'h-9 flex-1 rounded-md border border-border bg-bg px-2 text-sm outline-none focus:ring-2 focus:ring-brand/60';
+
+function SecuritySection({ enabled }: { enabled: boolean }) {
+  const qc = useQueryClient();
+  const [password, setPassword] = useState('');
+  const [setup, setSetup] = useState<TwoFactorSetup | null>(null);
+  const [code, setCode] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const refreshMe = () => qc.invalidateQueries({ queryKey: ['me'] });
+  const run = async (fn: () => Promise<void>, fallback: string) => {
+    setError(null);
+    setBusy(true);
+    try {
+      await fn();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : fallback);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const begin = () =>
+    run(async () => {
+      setSetup(await enable2FA(password));
+      setPassword('');
+    }, 'Could not start two-factor setup');
+  const confirm = () =>
+    run(async () => {
+      await verifyTotp(code.trim());
+      setSetup(null);
+      setCode('');
+      await refreshMe();
+    }, 'Invalid code');
+  const disable = () =>
+    run(async () => {
+      await disable2FA(password);
+      setPassword('');
+      await refreshMe();
+    }, 'Could not disable two-factor');
+
+  return (
+    <section className="mb-8 rounded-xl border border-border bg-surface p-5">
+      <h2 className="mb-1 font-medium">Security</h2>
+      <p className="mb-3 text-sm text-muted">
+        Two-factor authentication (TOTP) adds a code from your authenticator app at sign-in.
+      </p>
+
+      {enabled ? (
+        <div className="space-y-2">
+          <div className="text-sm text-emerald-400">Two-factor authentication is on.</div>
+          <div className="flex gap-2">
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Current password"
+              className={fieldCls}
+            />
+            <Button variant="danger" onClick={disable} disabled={busy || !password}>
+              {busy && <Loader2 className="size-4 animate-spin" />} Disable
+            </Button>
+          </div>
+        </div>
+      ) : setup ? (
+        <div className="space-y-2 text-sm">
+          <div>Add this to your authenticator app, then enter the 6-digit code:</div>
+          <code className="block break-all rounded bg-bg px-2 py-1 text-xs">{setup.totpURI}</code>
+          <div className="text-muted">Backup codes — save these somewhere safe:</div>
+          <code className="block whitespace-pre-wrap rounded bg-bg px-2 py-1 text-xs">
+            {setup.backupCodes.join('   ')}
+          </code>
+          <div className="flex gap-2">
+            <input
+              inputMode="numeric"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="000000"
+              className={fieldCls}
+            />
+            <Button onClick={confirm} disabled={busy || !code}>
+              {busy && <Loader2 className="size-4 animate-spin" />} Confirm
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex gap-2">
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Current password"
+            className={fieldCls}
+          />
+          <Button onClick={begin} disabled={busy || !password}>
+            {busy && <Loader2 className="size-4 animate-spin" />} Enable
+          </Button>
+        </div>
+      )}
+
+      {error && <div className="mt-2 text-sm text-red-400">{error}</div>}
     </section>
   );
 }

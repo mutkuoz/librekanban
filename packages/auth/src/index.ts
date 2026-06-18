@@ -1,7 +1,7 @@
-import { type Database, account, session, user, verification } from '@librekanban/db';
+import { type Database, account, session, twoFactor as twoFactorTable, user, verification } from '@librekanban/db';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { genericOAuth } from 'better-auth/plugins';
+import { genericOAuth, twoFactor } from 'better-auth/plugins';
 
 type SocialProviders = NonNullable<Parameters<typeof betterAuth>[0]['socialProviders']>;
 
@@ -34,6 +34,7 @@ export interface AuthOptions {
  */
 export function createAuth(opts: AuthOptions) {
   const plugins = [];
+  plugins.push(twoFactor());
   if (opts.oidc) {
     plugins.push(
       genericOAuth({
@@ -56,7 +57,7 @@ export function createAuth(opts: AuthOptions) {
     trustedOrigins: opts.trustedOrigins ?? [opts.baseURL],
     database: drizzleAdapter(opts.db, {
       provider: 'pg',
-      schema: { user, session, account, verification },
+      schema: { user, session, account, verification, twoFactor: twoFactorTable },
     }),
     emailAndPassword: {
       enabled: true,

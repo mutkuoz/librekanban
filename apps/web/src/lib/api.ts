@@ -93,7 +93,13 @@ async function req<T>(method: string, path: string, body?: unknown): Promise<T> 
 }
 
 export interface MeResponse {
-  user: { id: string; name: string; email: string; image: string | null };
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    image: string | null;
+    twoFactorEnabled: boolean;
+  };
   workspaces: { id: string; name: string; slug: string; role: string }[];
 }
 

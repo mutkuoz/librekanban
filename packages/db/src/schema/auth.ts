@@ -16,10 +16,22 @@ export const user = pgTable('user', {
   image: text('image'),
   // --- librekanban profile extensions (defaulted so better-auth inserts work) ---
   isSuperadmin: boolean('isSuperadmin').notNull().default(false),
+  twoFactorEnabled: boolean('twoFactorEnabled').notNull().default(false),
   locale: text('locale').notNull().default('en'),
   timezone: text('timezone').notNull().default('UTC'),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+});
+
+/** TOTP second factor (better-auth `twoFactor` plugin). Secret + backup codes. */
+export const twoFactor = pgTable('twoFactor', {
+  id: text('id').primaryKey(),
+  userId: text('userId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  secret: text('secret').notNull(),
+  backupCodes: text('backupCodes').notNull(),
+  verified: boolean('verified').notNull().default(true),
 });
 
 export const session = pgTable('session', {

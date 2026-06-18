@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { signIn, signInWith, signInWithOIDC, signUp } from '@/lib/auth';
+import { signIn, signInWith, signInWithOIDC, signUp, verifyTotp } from '@/lib/auth';
 import { useAppConfig } from '@/lib/queries';
 import { useQueryClient } from '@tanstack/react-query';
 import { Github, KeyRound, Loader2 } from 'lucide-react';
@@ -14,14 +14,26 @@ export function AuthPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [needsCode, setNeedsCode] = useState(false);
+  const [code, setCode] = useState('');
+
+  const inputCls =
+    'w-full h-10 rounded-md bg-bg border border-border px-3 text-sm outline-none focus:ring-2 focus:ring-brand/60';
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
     setBusy(true);
     try {
-      if (mode === 'signup') await signUp(name, email, password);
-      else await signIn(email, password);
+      if (mode === 'signup') {
+        await signUp(name, email, password);
+      } else {
+        const { twoFactor } = await signIn(email, password);
+        if (twoFactor) {
+          setNeedsCode(true);
+          return;
+        }
+      }
       await qc.invalidateQueries({ queryKey: ['me'] });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
@@ -30,8 +42,46 @@ export function AuthPage() {
     }
   };
 
-  const inputCls =
-    'w-full h-10 rounded-md bg-bg border border-border px-3 text-sm outline-none focus:ring-2 focus:ring-brand/60';
+  const onVerify = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setBusy(true);
+    try {
+      await verifyTotp(code.trim());
+      await qc.invalidateQueries({ queryKey: ['me'] });
+    } catch {
+      setError('Invalid code. Try again.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (needsCode) {
+    return (
+      <div className="min-h-full grid place-items-center p-6">
+        <form onSubmit={onVerify} className="w-full max-w-sm space-y-3">
+          <div className="mb-4 text-center">
+            <div className="text-2xl font-semibold tracking-tight">Two-factor auth</div>
+            <div className="mt-1 text-sm text-muted">Enter the 6-digit code from your app</div>
+          </div>
+          <input
+            className={`${inputCls} text-center tracking-[0.4em]`}
+            // biome-ignore lint/a11y/noAutofocus: focus the code field on this step
+            autoFocus
+            inputMode="numeric"
+            placeholder="000000"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            required
+          />
+          {error && <div className="text-sm text-red-400">{error}</div>}
+          <Button type="submit" className="w-full" disabled={busy}>
+            {busy && <Loader2 className="size-4 animate-spin" />} Verify
+          </Button>
+        </form>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-full grid place-items-center p-6">
