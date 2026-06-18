@@ -32,6 +32,7 @@ export const en = {
 
   'nav.settings': 'Settings',
   'nav.boards': 'Boards',
+  'nav.menu': 'Menu',
   'nav.signOut': 'Sign out',
   'nav.switchWorkspace': 'Switch workspace',
   'nav.notifications': 'Notifications',

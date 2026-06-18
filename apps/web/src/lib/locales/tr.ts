@@ -34,6 +34,7 @@ export const tr: Record<TranslationKey, string> = {
 
   'nav.settings': 'Ayarlar',
   'nav.boards': 'Panolar',
+  'nav.menu': 'Menü',
   'nav.signOut': 'Çıkış yap',
   'nav.switchWorkspace': 'Çalışma alanını değiştir',
   'nav.notifications': 'Bildirimler',

@@ -64,7 +64,7 @@ export function BoardPage({ boardId }: { boardId: string }) {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
+      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2 md:gap-3 md:px-4 md:py-3">
         <div className="flex items-center gap-3">
           <h1 className="font-semibold">{data.board.name}</h1>
           <div className="flex rounded-md border border-border bg-surface p-0.5 text-sm">
@@ -181,7 +181,9 @@ export function BoardPage({ boardId }: { boardId: string }) {
               <SlidersHorizontal className="size-4" />
             </button>
           )}
-          <Avatars users={presence} />
+          <div className="hidden sm:block">
+            <Avatars users={presence} />
+          </div>
         </div>
       </header>
 
