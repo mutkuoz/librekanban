@@ -38,3 +38,19 @@ export function signInWith(provider: 'github' | 'google'): void {
     })
     .catch(() => {});
 }
+
+/** Kick off the generic OIDC / SSO flow (redirects the browser). */
+export function signInWithOIDC(): void {
+  const callbackURL = window.location.origin;
+  fetch('/api/auth/sign-in/oauth2', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ providerId: 'oidc', callbackURL }),
+  })
+    .then((r) => r.json())
+    .then((d: { url?: string }) => {
+      if (d.url) window.location.href = d.url;
+    })
+    .catch(() => {});
+}

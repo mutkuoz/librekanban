@@ -74,6 +74,14 @@ async function main(): Promise<void> {
     baseURL: env.PUBLIC_URL,
     trustedOrigins: [env.PUBLIC_URL, 'http://localhost:5173'],
     socialProviders: buildSocialProviders(env),
+    oidc:
+      env.OIDC_ISSUER && env.OIDC_CLIENT_ID && env.OIDC_CLIENT_SECRET
+        ? {
+            issuer: env.OIDC_ISSUER,
+            clientId: env.OIDC_CLIENT_ID,
+            clientSecret: env.OIDC_CLIENT_SECRET,
+          }
+        : undefined,
   });
 
   // Redis (optional) powers multi-node realtime fan-out + shared rate limiting.

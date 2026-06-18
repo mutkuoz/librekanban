@@ -37,6 +37,11 @@ export default defineConfig({
       STATIC_DIR: distDir,
       AUTO_MIGRATE: 'true',
       LOG_LEVEL: 'warn',
+      // Exercises the OIDC/SSO button (discovery is never hit — we only assert it renders).
+      OIDC_ISSUER: 'https://id.example.com',
+      OIDC_CLIENT_ID: 'dummy-client',
+      OIDC_CLIENT_SECRET: 'dummy-secret',
+      OIDC_NAME: 'Acme',
     },
   },
 });

@@ -6,6 +6,9 @@ import { subscribeToBoard } from './ws';
 
 export const useMe = () => useQuery({ queryKey: ['me'], queryFn: api.me, retry: false });
 
+export const useAppConfig = () =>
+  useQuery({ queryKey: ['config'], queryFn: api.config, staleTime: Number.POSITIVE_INFINITY });
+
 export const useBoards = () => useQuery({ queryKey: ['boards'], queryFn: api.listBoards });
 
 export const useBoard = (boardId: string) =>

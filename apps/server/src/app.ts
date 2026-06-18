@@ -45,6 +45,16 @@ export function createApp(deps: Deps, rateLimiters: RateLimiters) {
   app.use('/api/auth/*', rateLimiters.auth);
   app.on(['GET', 'POST'], '/api/auth/*', (c) => deps.auth.handler(c.req.raw));
 
+  // Public runtime config the SPA reads before sign-in (which providers exist).
+  app.get('/api/config', (c) => {
+    const e = c.get('deps').env;
+    return c.json({
+      oidcEnabled: Boolean(e.OIDC_ISSUER && e.OIDC_CLIENT_ID && e.OIDC_CLIENT_SECRET),
+      oidcName: e.OIDC_NAME,
+      signupMode: e.SIGNUP_MODE,
+    });
+  });
+
   // Resolve the session for the rest of the API, rate-limit it, then mount routes.
   app.use('/api/*', authMiddleware);
   app.use('/api/*', rateLimiters.api);

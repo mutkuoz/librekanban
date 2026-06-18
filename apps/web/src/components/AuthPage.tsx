@@ -1,11 +1,13 @@
 import { Button } from '@/components/ui/button';
-import { signIn, signInWith, signUp } from '@/lib/auth';
+import { signIn, signInWith, signInWithOIDC, signUp } from '@/lib/auth';
+import { useAppConfig } from '@/lib/queries';
 import { useQueryClient } from '@tanstack/react-query';
-import { Github, Loader2 } from 'lucide-react';
+import { Github, KeyRound, Loader2 } from 'lucide-react';
 import { type FormEvent, useState } from 'react';
 
 export function AuthPage() {
   const qc = useQueryClient();
+  const { data: config } = useAppConfig();
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -91,6 +93,17 @@ export function AuthPage() {
           >
             <Github className="size-4" /> Continue with GitHub
           </Button>
+
+          {config?.oidcEnabled && (
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full"
+              onClick={() => signInWithOIDC()}
+            >
+              <KeyRound className="size-4" /> Continue with {config.oidcName}
+            </Button>
+          )}
         </form>
 
         <button

@@ -107,7 +107,14 @@ export interface BoardDetail {
   cards: BoardCard[];
 }
 
+export interface AppConfig {
+  oidcEnabled: boolean;
+  oidcName: string;
+  signupMode: string;
+}
+
 export const api = {
+  config: () => req<AppConfig>('GET', '/config'),
   me: () => req<MeResponse>('GET', '/me'),
   members: () => req<WorkspaceMember[]>('GET', '/members'),
   setMemberRole: (userId: string, role: WorkspaceRole) =>

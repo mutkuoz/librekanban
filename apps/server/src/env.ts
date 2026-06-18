@@ -22,6 +22,13 @@ const envSchema = z.object({
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
 
+  // Generic OIDC / SSO (e.g. Keycloak, Authentik, Okta). When all three are set,
+  // a "Continue with <OIDC_NAME>" button appears on the sign-in page.
+  OIDC_ISSUER: z.string().url().optional(),
+  OIDC_CLIENT_ID: z.string().optional(),
+  OIDC_CLIENT_SECRET: z.string().optional(),
+  OIDC_NAME: z.string().default('SSO'),
+
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
   AUTO_MIGRATE: boolFromEnv(true),
 
