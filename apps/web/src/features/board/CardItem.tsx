@@ -59,7 +59,7 @@ export function CardItem({
       {...listeners}
       onClick={onClick}
       className={cn(
-        'w-full space-y-2 rounded-lg border border-border bg-surface-2 p-3 text-left transition-colors hover:border-brand/50 active:cursor-grabbing',
+        'w-full space-y-2 rounded-lg border border-border bg-surface-2 p-3 text-left shadow-sm transition-all hover:border-brand/50 hover:shadow-md active:cursor-grabbing',
         isDragging && 'opacity-40',
       )}
     >

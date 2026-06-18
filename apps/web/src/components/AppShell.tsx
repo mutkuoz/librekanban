@@ -5,7 +5,7 @@ import { useT } from '@/lib/i18n';
 import { useMe } from '@/lib/queries';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link, Outlet, useRouter } from '@tanstack/react-router';
-import { Loader2, LogOut, Settings } from 'lucide-react';
+import { Loader2, LogOut, Settings, SquareKanban } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { AuthPage } from './AuthPage';
 import { NotificationBell } from './NotificationBell';
@@ -60,7 +60,10 @@ export function AppShell() {
     <div className="flex h-full flex-col">
       <nav className="flex items-center justify-between border-b border-border px-4 py-2.5">
         <div className="flex items-center gap-3">
-          <Link to="/" className="font-semibold tracking-tight">
+          <Link to="/" className="flex items-center gap-2 font-semibold tracking-tight">
+            <span className="grid size-6 place-items-center rounded-md bg-brand text-brand-fg">
+              <SquareKanban className="size-4" />
+            </span>
             librekanban
           </Link>
           {workspaces.length > 1 && (

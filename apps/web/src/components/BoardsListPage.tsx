@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { useT } from '@/lib/i18n';
 import { useBoards, useCreateBoard } from '@/lib/queries';
 import { Link } from '@tanstack/react-router';
-import { Loader2, Plus, Upload } from 'lucide-react';
+import { LayoutGrid, Loader2, Plus, Upload } from 'lucide-react';
 import { useState } from 'react';
 
 export function BoardsListPage() {
@@ -69,8 +69,12 @@ export function BoardsListPage() {
               key={b.id}
               to="/b/$boardId"
               params={{ boardId: b.id }}
-              className="rounded-xl border border-border bg-surface p-4 transition-colors hover:border-brand/60"
+              className="group relative overflow-hidden rounded-xl border border-border bg-surface p-4 pl-5 transition-all hover:-translate-y-0.5 hover:border-brand/60 hover:shadow-lg"
             >
+              <span
+                className="absolute inset-y-0 left-0 w-1.5"
+                style={{ background: b.color ?? 'var(--color-brand)' }}
+              />
               <div className="font-medium">{b.name}</div>
               {b.description && (
                 <div className="mt-1 line-clamp-2 text-sm text-muted">{b.description}</div>
@@ -79,8 +83,11 @@ export function BoardsListPage() {
           ))}
         </div>
       ) : (
-        <div className="rounded-xl border border-dashed border-border p-10 text-center text-muted">
-          {t('boards.empty')}
+        <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border p-12 text-center">
+          <div className="grid size-12 place-items-center rounded-full bg-surface-2 text-muted">
+            <LayoutGrid className="size-6" />
+          </div>
+          <div className="text-muted">{t('boards.empty')}</div>
         </div>
       )}
     </div>

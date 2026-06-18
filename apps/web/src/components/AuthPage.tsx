@@ -3,7 +3,7 @@ import { signIn, signInWith, signInWithOIDC, signUp, verifyTotp } from '@/lib/au
 import { useT } from '@/lib/i18n';
 import { useAppConfig } from '@/lib/queries';
 import { useQueryClient } from '@tanstack/react-query';
-import { Github, KeyRound, Loader2 } from 'lucide-react';
+import { Github, KeyRound, Loader2, SquareKanban } from 'lucide-react';
 import { type FormEvent, useState } from 'react';
 
 export function AuthPage() {
@@ -86,16 +86,21 @@ export function AuthPage() {
   }
 
   return (
-    <div className="min-h-full grid place-items-center p-6">
-      <div className="w-full max-w-sm">
+    <div className="relative min-h-full grid place-items-center overflow-hidden p-6">
+      {/* Decorative brand glow behind the card. */}
+      <div className="pointer-events-none absolute -top-32 left-1/2 size-80 -translate-x-1/2 rounded-full bg-brand/20 blur-3xl" />
+      <div className="relative w-full max-w-sm">
         <div className="mb-8 text-center">
+          <div className="mx-auto mb-3 grid size-12 place-items-center rounded-xl bg-brand text-brand-fg shadow-lg shadow-brand/30">
+            <SquareKanban className="size-7" />
+          </div>
           <div className="text-2xl font-semibold tracking-tight">librekanban</div>
           <div className="text-muted text-sm mt-1">{t('auth.tagline')}</div>
         </div>
 
         <form
           onSubmit={onSubmit}
-          className="space-y-3 bg-surface border border-border rounded-xl p-5"
+          className="space-y-3 bg-surface border border-border rounded-xl p-5 shadow-xl"
         >
           {mode === 'signup' && (
             <input
